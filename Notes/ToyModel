@@ -1,0 +1,15 @@
+==============================================================================
+Filename: ToyModel
+Autho: Brandon McKinzie
+Date Created: January 25 2016
+Description: Outline of how to create this toy model.
+==============================================================================
+
+- - - From Recording - - - 
+1. "Take trigger hadron flat in [0, 2pi] and also flat in -1 < eta < 1 (Alice)
+2. 
+
+
+- - - Peter Paper Toy Model  - - - 
+1. The Toy Model randomly generates massless particles with uniform distribution in eta and phi. 
+
