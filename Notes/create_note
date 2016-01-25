@@ -1,0 +1,25 @@
+#!/bin/bash
+# Template that creates note and prologue.
+
+DATE=$(date +"%B %d %Y")
+DESCRIPTION="$2"
+FILENAME="$1"
+
+if [ "$#" -ne 2 ] ; then
+    echo "Usage: create_note FILENAME DESCRIPTION"
+    exit 1
+fi
+
+# Create empty file.
+touch "$1"
+
+# Insert prologue.
+echo "==============================================================================" >> "$FILENAME"
+echo "Filename: $FILENAME"          >> "$FILENAME"
+echo "Autho: Brandon McKinzie"      >> "$FILENAME"
+echo "Date Created: $DATE"          >> "$FILENAME"
+echo "Description: $DESCRIPTION"    >> "$FILENAME"
+echo "==============================================================================" >> "$FILENAME"
+
+# Enter file.
+vim "$FILENAME"

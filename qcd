@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# "Quick-cd" to immediately go to a desired file in research folder.
+
+DIR="$1"
+cd ~/Research/Jet\ Radius\ Analysis/$1
+ls
+
+
+
