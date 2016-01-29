@@ -13,3 +13,12 @@ Description: Outline of how to create this toy model.
 - - - Peter Paper Toy Model  - - - 
 1. The Toy Model randomly generates massless particles with uniform distribution in eta and phi. 
 
+
+- - - ToyModel.C - - - 
+*   TClonesArray has a terribly misleading name. The point is it hold an array of OBJECTS,
+    and each OBJECT allocates memory with new ONCE. Subsequent calls to DELETE actually just 
+    CLEAR the memory for that ith OBJECT but don't DEALLOCATE the memory. That's it. jesus.
+
+*   Leonardo: Add phase space plots(eta, phi, pt) distribution of trigger, associated, and background particles.
+                Correlation in delta_eta delta_phi and delta_phi projection of waway side. 
+
