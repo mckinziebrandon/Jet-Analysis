@@ -20,13 +20,16 @@
 #include "TString.h"
 #include "TTree.h"
 
-TString HistName;
-TCanvas* MyC;
-TPad* pad_1;
-TPad* pad_2;
 
+// -----------------------------------------------------------------------------
+// Function Prototypes
+// -----------------------------------------------------------------------------
 void SetDrawOptions(TH1F* h, TString x_label, TString  y_label);
 
+
+// -----------------------------------------------------------------------------
+// Function Implementations
+// -----------------------------------------------------------------------------
 void SetDrawOptions(TH1F* h, TString x_label, TString  y_label)
 {
     h->SetStats(0);
