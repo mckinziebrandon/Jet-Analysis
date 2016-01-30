@@ -7,26 +7,29 @@
 *               Serves as introduction to toy models for me (Brandon) and                   *
 *               two-particle correlation study.                                             *
 ********************************************************************************************/
-#include "./include/RootClasses.h"
-#include "./lib/ToyModel.cpp"
 #include <iostream>
 #include <fstream>
+#include "./include/PrintFunctions.h"
+#include "./include/RootClasses.h"
+#include "./include/ToyModel.h"
 
 // ---------- Constants ----------
 const Int_t nEvents             = 100000;
 const Int_t nBkg                = 10;
+const Int_t nCanvas             = 3;
 const Int_t trig_pt_threshold   = 1;
 const Int_t parton_mass         = 0;
-const Double_t sigma_dphi       = (pi / 4) / 2;
+const Float_t sigma_dphi       = (pi / 4) / 2;
 // -------------------------------
 
 // --------------------------------------------------------------------------------------------
 void ToyModel()
 {
+    Float_t eta, phi;
+
     // Create file for object output tests.
     std::ofstream f_debug("./debug/debug_ToyModel.txt");
 
-    Double_t eta, phi;
     // Phase space: trigger.
     TTree* t_trig = new TTree("t_trig", "Trigger attributes");
     t_trig->Branch("eta", &eta);
@@ -45,14 +48,11 @@ void ToyModel()
     // Will randomly generate uniform eta and phi of simulated jets. 
     TRandom3* rand = new TRandom3();
 
+    // Simulate nEvents with randomly generated tracks. 
     for (Int_t i_event = 0; i_event < nEvents; i_event++)
     {
-
-        if (i_event % (nEvents / 10) == 0)
-        {
-            Double_t percent_complete = Double_t(i_event) / Double_t(nEvents) * 100.;
-            Printf("Beginning event %i. Simulation is %.2lf%% complete.", i_event, percent_complete);
-        }
+        // Print update in 10 percent increments.
+        PrintEventStatus(i_event, nEvents, 10);
 
         // Generate trigger eta and phi.
         eta = rand->Uniform(-1.00, 1.00);
@@ -73,17 +73,27 @@ void ToyModel()
         }
     }
 
+
     // --------------------------------------------------------------------------------
-    TCanvas* c_trig = new TCanvas("c_trig", "Trigger hadron canvas", 20, 20, 700, 500);
-    c_trig->Divide(2, 1);
+    TCanvas* c_trig = new TCanvas("c_trig", "Trigger hadron canvas", 50, 50, 700, 500);
+    TPad* p_trig_1  = new TPad("p_trig_1", "Trigger Pad 1", 0.03, 0.03, 0.47, 0.95);
+    p_trig_1->SetLeftMargin(0.15);
+    p_trig_1->Draw();
 
-    c_trig->cd(1);
-    t_trig->Draw("eta");
+    TPad* p_trig_2  = new TPad("p_trig_2", "Trigger Pad 2", 0.52, 0.03, 0.95, 0.95);
+    p_trig_2->SetLeftMargin(0.15);
+    p_trig_2->Draw();
 
-    c_trig->cd(2);
-    t_trig->Draw("phi");
+    p_trig_1->cd();
+    t_trig->Draw("eta>>h_eta");
+    SetDrawOptions((TH1F*)gDirectory->Get("h_eta"), TString("eta"), TString("counts"));
+
+    p_trig_2->cd();
+    t_trig->Draw("phi>>h_phi");
+    SetDrawOptions((TH1F*)gDirectory->Get("h_phi"), TString("phi"), TString("counts"));
     // --------------------------------------------------------------------------------
 
+    /*
     // --------------------------------------------------------------------------------
     TCanvas* c_assoc = new TCanvas("c_assoc", "Assoc hadron canvas", 20, 200, 700, 500);
     c_assoc->Divide(2, 1);
@@ -104,4 +114,5 @@ void ToyModel()
 
     c_bkg->cd(2);
     t_bkg->Draw("phi");
+    */
 }
