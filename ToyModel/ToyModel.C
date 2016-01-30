@@ -27,6 +27,8 @@ void ToyModel()
 {
     Float_t eta, phi;
 
+    TFile* f_out = new TFile("./rootFiles/ToyModel.root", "RECREATE");
+
     // Create file for object output tests.
     std::ofstream f_debug("./debug/debug_ToyModel.txt");
 
@@ -73,6 +75,7 @@ void ToyModel()
         }
     }
 
+    f_out->cd();
 
     // --------------------------------------------------------------------------------
     TCanvas* c_trig = new TCanvas("c_trig", "Trigger hadron canvas", 50, 50, 700, 500);
@@ -85,34 +88,59 @@ void ToyModel()
     p_trig_2->Draw();
 
     p_trig_1->cd();
-    t_trig->Draw("eta>>h_eta");
-    SetDrawOptions((TH1F*)gDirectory->Get("h_eta"), TString("eta"), TString("counts"));
+    t_trig->Draw("eta>>h_trig_eta");
+    SetDrawOptions((TH1F*)gDirectory->Get("h_trig_eta"), TString("eta"), TString("counts"));
 
     p_trig_2->cd();
-    t_trig->Draw("phi>>h_phi");
-    SetDrawOptions((TH1F*)gDirectory->Get("h_phi"), TString("phi"), TString("counts"));
-    // --------------------------------------------------------------------------------
+    t_trig->Draw("phi>>h_trig_phi");
+    SetDrawOptions((TH1F*)gDirectory->Get("h_trig_phi"), TString("phi"), TString("counts"));
 
-    /*
-    // --------------------------------------------------------------------------------
-    TCanvas* c_assoc = new TCanvas("c_assoc", "Assoc hadron canvas", 20, 200, 700, 500);
-    c_assoc->Divide(2, 1);
-
-    c_assoc->cd(1);
-    t_assoc->Draw("eta");
-
-    c_assoc->cd(2);
-    t_assoc->Draw("phi");
+    c_trig->Write();
     // --------------------------------------------------------------------------------
 
     // --------------------------------------------------------------------------------
-    TCanvas* c_bkg = new TCanvas("c_bkg", "Background hadron canvas", 60, 200, 700, 500);
-    c_bkg->Divide(2, 1);
+    TCanvas* c_assoc = new TCanvas("c_assoc", "Trigger hadron canvas", 50, 50, 700, 500);
+    TPad* p_assoc_1  = new TPad("p_assoc_1", "Trigger Pad 1", 0.03, 0.03, 0.47, 0.95);
+    p_assoc_1->SetLeftMargin(0.15);
+    p_assoc_1->Draw();
 
-    c_bkg->cd(1);
-    t_bkg->Draw("eta");
+    TPad* p_assoc_2  = new TPad("p_assoc_2", "Trigger Pad 2", 0.52, 0.03, 0.95, 0.95);
+    p_assoc_2->SetLeftMargin(0.15);
+    p_assoc_2->Draw();
 
-    c_bkg->cd(2);
-    t_bkg->Draw("phi");
-    */
+    p_assoc_1->cd();
+    t_assoc->Draw("eta>>h_assoc_eta");
+    SetDrawOptions((TH1F*)gDirectory->Get("h_assoc_eta"), TString("eta"), TString("counts"));
+
+    p_assoc_2->cd();
+    t_assoc->Draw("phi>>h_assoc_phi");
+    SetDrawOptions((TH1F*)gDirectory->Get("h_assoc_phi"), TString("phi"), TString("counts"));
+
+    c_assoc->Write();
+    // --------------------------------------------------------------------------------
+
+    // --------------------------------------------------------------------------------
+    TCanvas* c_bkg = new TCanvas("c_bkg", "Trigger hadron canvas", 50, 50, 700, 500);
+    TPad* p_bkg_1  = new TPad("p_bkg_1", "Trigger Pad 1", 0.03, 0.03, 0.47, 0.95);
+    p_bkg_1->SetLeftMargin(0.15);
+    p_bkg_1->Draw();
+
+    TPad* p_bkg_2  = new TPad("p_bkg_2", "Trigger Pad 2", 0.52, 0.03, 0.95, 0.95);
+    p_bkg_2->SetLeftMargin(0.15);
+    p_bkg_2->Draw();
+
+    p_bkg_1->cd();
+    t_bkg->Draw("eta>>h_bkg_eta");
+    SetDrawOptions((TH1F*)gDirectory->Get("h_bkg_eta"), TString("eta"), TString("counts"));
+
+    p_bkg_2->cd();
+    t_bkg->Draw("phi>>h_bkg_phi");
+    SetDrawOptions((TH1F*)gDirectory->Get("h_bkg_phi"), TString("phi"), TString("counts"));
+
+    c_bkg->Write();
+    // --------------------------------------------------------------------------------
+
+    f_out->Write();
+
+
 }
