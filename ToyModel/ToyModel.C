@@ -1,8 +1,7 @@
 /********************************************************************************************
 * Filename:     ToyModel.C                                                                  *
 * Date Created: January 25, 2016                                                            *
-* Author:       Leonardo Milano                                                             *
-* Edited by:    Brandon McKinzie                                                            *
+* Author:       Brandon McKinzie                                                            *
 * Description:  Simple model event generator for multiple parton scattering.                *
 *               Serves as introduction to toy models for me (Brandon) and                   *
 *               two-particle correlation study.                                             *
@@ -25,6 +24,10 @@ const Float_t sigma_dphi       = (pi / 4) / 2;
 // --------------------------------------------------------------------------------------------
 void ToyModel()
 {
+    /* ------------------------------------------------------------ *
+     * Object Declarations.                                         *
+     * ------------------------------------------------------------ */
+
     Float_t eta, phi;
 
     TFile* f_out = new TFile("./rootFiles/ToyModel.root", "RECREATE");
@@ -49,6 +52,10 @@ void ToyModel()
 
     // Will randomly generate uniform eta and phi of simulated jets. 
     TRandom3* rand = new TRandom3();
+
+    /* ---------------------------------------------------- *
+     * Data Generation/Simulation.                          *       
+     * ---------------------------------------------------- */
 
     // Simulate nEvents with randomly generated tracks. 
     for (Int_t i_event = 0; i_event < nEvents; i_event++)
@@ -75,22 +82,29 @@ void ToyModel()
         }
     }
 
+    /* ------------------------------------------------------------ *
+     * Drawing and Saving.                                          *
+     * ------------------------------------------------------------ */
+
     f_out->cd();
+
+    // Create list of generic histogram identifiers for plotting.
     TString histNames[] = {"phi", "eta", "phi:eta"};
 
-    TCanvas* c_trigger = (TCanvas*)DrawHists(3, TString("trig"), histNames, t_trig);
+    // Draw [3] [trigger] histograms from data in [t_trig].
+    TCanvas* c_trigger = (TCanvas*)DrawHists(3, TString("trigger"), histNames, t_trig);
     c_trigger->Write();
     c_trigger->Close();
 
-    TCanvas* c_associated = (TCanvas*)DrawHists(3, TString("assoc"), histNames, t_assoc);
+    // Draw [3] [associated] histograms from data in [t_assoc].
+    TCanvas* c_associated = (TCanvas*)DrawHists(3, TString("associated"), histNames, t_assoc);
     c_associated->Write();
     c_associated->Close();
 
-    TCanvas* c_bkg = (TCanvas*)DrawHists(3, TString("bkg"), histNames, t_bkg);
+    // Draw [3] [background] histograms from data in [t_bkg].
+    TCanvas* c_bkg = (TCanvas*)DrawHists(3, TString("background"), histNames, t_bkg);
     c_bkg->Write();
     c_bkg->Close();
 
     f_out->Write();
 }
-
-
