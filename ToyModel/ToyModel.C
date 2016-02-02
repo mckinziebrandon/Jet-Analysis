@@ -76,71 +76,21 @@ void ToyModel()
     }
 
     f_out->cd();
+    TString histNames[] = {"phi", "eta", "phi:eta"};
 
-    // --------------------------------------------------------------------------------
-    TCanvas* c_trig = new TCanvas("c_trig", "Trigger hadron canvas", 50, 50, 700, 500);
-    TPad* p_trig_1  = new TPad("p_trig_1", "Trigger Pad 1", 0.03, 0.03, 0.47, 0.95);
-    p_trig_1->SetLeftMargin(0.15);
-    p_trig_1->Draw();
+    TCanvas* c_trigger = (TCanvas*)DrawHists(3, TString("trig"), histNames, t_trig);
+    c_trigger->Write();
+    c_trigger->Close();
 
-    TPad* p_trig_2  = new TPad("p_trig_2", "Trigger Pad 2", 0.52, 0.03, 0.95, 0.95);
-    p_trig_2->SetLeftMargin(0.15);
-    p_trig_2->Draw();
+    TCanvas* c_associated = (TCanvas*)DrawHists(3, TString("assoc"), histNames, t_assoc);
+    c_associated->Write();
+    c_associated->Close();
 
-    p_trig_1->cd();
-    t_trig->Draw("eta>>h_trig_eta");
-    SetDrawOptions((TH1F*)gDirectory->Get("h_trig_eta"), TString("eta"), TString("counts"));
-
-    p_trig_2->cd();
-    t_trig->Draw("phi>>h_trig_phi");
-    SetDrawOptions((TH1F*)gDirectory->Get("h_trig_phi"), TString("phi"), TString("counts"));
-
-    c_trig->Write();
-    // --------------------------------------------------------------------------------
-
-    // --------------------------------------------------------------------------------
-    TCanvas* c_assoc = new TCanvas("c_assoc", "Trigger hadron canvas", 50, 50, 700, 500);
-    TPad* p_assoc_1  = new TPad("p_assoc_1", "Trigger Pad 1", 0.03, 0.03, 0.47, 0.95);
-    p_assoc_1->SetLeftMargin(0.15);
-    p_assoc_1->Draw();
-
-    TPad* p_assoc_2  = new TPad("p_assoc_2", "Trigger Pad 2", 0.52, 0.03, 0.95, 0.95);
-    p_assoc_2->SetLeftMargin(0.15);
-    p_assoc_2->Draw();
-
-    p_assoc_1->cd();
-    t_assoc->Draw("eta>>h_assoc_eta");
-    SetDrawOptions((TH1F*)gDirectory->Get("h_assoc_eta"), TString("eta"), TString("counts"));
-
-    p_assoc_2->cd();
-    t_assoc->Draw("phi>>h_assoc_phi");
-    SetDrawOptions((TH1F*)gDirectory->Get("h_assoc_phi"), TString("phi"), TString("counts"));
-
-    c_assoc->Write();
-    // --------------------------------------------------------------------------------
-
-    // --------------------------------------------------------------------------------
-    TCanvas* c_bkg = new TCanvas("c_bkg", "Trigger hadron canvas", 50, 50, 700, 500);
-    TPad* p_bkg_1  = new TPad("p_bkg_1", "Trigger Pad 1", 0.03, 0.03, 0.47, 0.95);
-    p_bkg_1->SetLeftMargin(0.15);
-    p_bkg_1->Draw();
-
-    TPad* p_bkg_2  = new TPad("p_bkg_2", "Trigger Pad 2", 0.52, 0.03, 0.95, 0.95);
-    p_bkg_2->SetLeftMargin(0.15);
-    p_bkg_2->Draw();
-
-    p_bkg_1->cd();
-    t_bkg->Draw("eta>>h_bkg_eta");
-    SetDrawOptions((TH1F*)gDirectory->Get("h_bkg_eta"), TString("eta"), TString("counts"));
-
-    p_bkg_2->cd();
-    t_bkg->Draw("phi>>h_bkg_phi");
-    SetDrawOptions((TH1F*)gDirectory->Get("h_bkg_phi"), TString("phi"), TString("counts"));
-
+    TCanvas* c_bkg = (TCanvas*)DrawHists(3, TString("bkg"), histNames, t_bkg);
     c_bkg->Write();
-    // --------------------------------------------------------------------------------
+    c_bkg->Close();
 
     f_out->Write();
-
-
 }
+
+

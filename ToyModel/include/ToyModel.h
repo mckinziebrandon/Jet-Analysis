@@ -3,9 +3,15 @@
 
 const Float_t pi = TMath::Pi();
 
+// -----------------------------------------------------------------------------
+// Function Prototypes
+// -----------------------------------------------------------------------------
 Float_t dphi(Float_t p, Float_t p2); 
 Float_t GetAssocPhi(Float_t tp, Float_t sp, TRandom3* r);
 
+// -----------------------------------------------------------------------------
+// Function Implementations
+// -----------------------------------------------------------------------------
 Float_t dphi(Float_t phi1,Float_t phi2)
 {
     Float_t phimin = -0.5 * pi;

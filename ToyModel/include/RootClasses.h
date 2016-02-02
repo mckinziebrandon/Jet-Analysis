@@ -24,14 +24,19 @@
 // -----------------------------------------------------------------------------
 // Function Prototypes
 // -----------------------------------------------------------------------------
-void SetDrawOptions(TH1F* h, TString x_label, TString  y_label);
+template<typename Hist>
+void SetDrawOptions(Hist* h, TString x_label, TString  y_label);
+TCanvas* DrawHists(const Int_t n, TString index, TString names[], TTree* tree);
 
 
 // -----------------------------------------------------------------------------
 // Function Implementations
 // -----------------------------------------------------------------------------
-void SetDrawOptions(TH1F* h, TString x_label, TString  y_label)
+template<typename Hist>
+void SetDrawOptions(Hist* h, TString x_label, TString  y_label)
 {
+    cout << "\nx: " << x_label.Data();
+    cout << "\ny: " << y_label.Data() << endl;
     h->SetStats(0);
 
     h->SetFillColor(kBlue+3);
@@ -53,6 +58,61 @@ void SetDrawOptions(TH1F* h, TString x_label, TString  y_label)
 }
 
 
+TCanvas* DrawHists(const Int_t n, TString index, TString names[], TTree* tree)
+{
+    TString id;
+    TTree* t_trig = (TTree*)tree;
+
+
+    id = "Canvas_";
+    id += index;
+    TCanvas* canvas = new TCanvas("canvas", id.Data(), 50, 50, 1000, 500);
+    canvas->Divide(n, 1);
+
+    
+    for (int i = 0; i < n; i++)
+    {
+        id = "hist_";
+        id += names[i];
+        id += "_";
+        id += index;
+
+        TString treeDraw = names[i];
+        treeDraw += ">>";
+        treeDraw += id;
+
+        canvas->cd(i+1);
+        t_trig->Draw(treeDraw.Data(), "", "col");
+        cout << "\nid = " << id.Data();
+
+        if (i != n-1)
+        {
+            TH1F* h = (TH1F*)gDirectory->Get(id.Data());
+
+            id = index;
+            id += " ";
+            id += names[i];
+            SetDrawOptions(h, TString(id.Data()), TString("counts")); 
+        }
+        else
+        {
+            TH2F* h = (TH2F*)gDirectory->Get(id.Data());
+
+            TString x, y;
+            x = index;
+            x += " ";
+            x += names[0];
+            y = index;
+            y += " ";
+            y += names[1];
+            SetDrawOptions(h, x, y); 
+        }
+    }
+
+    canvas->Update();
+    
+    return canvas;
+}
 
 
 
