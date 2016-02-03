@@ -28,7 +28,7 @@ void ToyModel()
      * Object Declarations.                                         *
      * ------------------------------------------------------------ */
 
-    Float_t eta, phi, pt;
+    Float_t eta, phi;
 
     TFile* f_out = new TFile("./rootFiles/ToyModel.root", "RECREATE");
 
@@ -39,21 +39,16 @@ void ToyModel()
     TTree* t_trig = new TTree("t_trig", "Trigger attributes");
     t_trig->Branch("eta", &eta);
     t_trig->Branch("phi", &phi);
-    t_trig->Branch("pt", &pt);
 
     // Phase space: associated.
     TTree* t_assoc = new TTree("t_assoc", "Associated attributes");
     t_assoc->Branch("eta", &eta);
     t_assoc->Branch("phi", &phi);
-    t_assoc->Branch("pt", &pt);
-
 
     // Phase space: background.
     TTree* t_bkg = new TTree("t_bkg", "Background attributes");
     t_bkg->Branch("eta", &eta);
     t_bkg->Branch("phi", &phi);
-    t_bkg->Branch("pt", &pt);
-
 
     // Will randomly generate uniform eta and phi of simulated jets. 
     TRandom3* rand = new TRandom3();
@@ -71,22 +66,20 @@ void ToyModel()
         // Generate trigger eta and phi.
         eta = rand->Uniform(-1.00, 1.00);
         phi = 2*pi*rand->Rndm();
-        pt = GetTrackPt();
         t_trig->Fill();
 
         // Generate associated eta and phi.
         eta = rand->Uniform(-1., 1.);
         phi = GetAssocPhi(phi, sigma_dphi, rand);
-        pt = GetTrackPt();
         t_assoc->Fill();
 
+        Double_t pt = GetTrackPt();l
 
         for (Int_t i_bkg = 0; i_bkg < nBkg; i_bkg++)
         {
             // Generate trigger eta and phi.
             eta = -1.00 + 2.00*rand->Rndm();
             phi = 2*pi*rand->Rndm();
-            pt = GetTrackPt();
             t_bkg->Fill();
         }
     }
@@ -98,20 +91,20 @@ void ToyModel()
     f_out->cd();
 
     // Create list of generic histogram identifiers for plotting.
-    TString histNames[] = {"phi", "eta", "pt", "phi:eta"};
+    TString histNames[] = {"phi", "eta", "phi:eta"};
 
     // Draw [3] [trigger] histograms from data in [t_trig].
-    TCanvas* c_trigger = (TCanvas*)DrawHists(4, TString("trigger"), histNames, t_trig);
+    TCanvas* c_trigger = (TCanvas*)DrawHists(3, TString("trigger"), histNames, t_trig);
     c_trigger->Write();
     c_trigger->Close();
 
     // Draw [3] [associated] histograms from data in [t_assoc].
-    TCanvas* c_associated = (TCanvas*)DrawHists(4, TString("associated"), histNames, t_assoc);
+    TCanvas* c_associated = (TCanvas*)DrawHists(3, TString("associated"), histNames, t_assoc);
     c_associated->Write();
     c_associated->Close();
 
     // Draw [3] [background] histograms from data in [t_bkg].
-    TCanvas* c_bkg = (TCanvas*)DrawHists(4, TString("background"), histNames, t_bkg);
+    TCanvas* c_bkg = (TCanvas*)DrawHists(3, TString("background"), histNames, t_bkg);
     c_bkg->Write();
     c_bkg->Close();
 

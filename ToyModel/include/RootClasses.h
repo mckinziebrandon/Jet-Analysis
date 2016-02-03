@@ -26,17 +26,33 @@
 // -----------------------------------------------------------------------------
 template<typename Hist>
 void SetDrawOptions(Hist* h, TString x_label, TString  y_label);
+
+template<typename Hist>
+TCanvas* DrawHistogram(Hist* h);
+
 TCanvas* DrawHists(const Int_t n, TString index, TString names[], TTree* tree);
+
 
 
 // -----------------------------------------------------------------------------
 // Function Implementations
 // -----------------------------------------------------------------------------
+
+template<typename Hist>
+TCanvas* DrawHistogram(Hist* h)
+{
+    TCanvas* c = new TCanvas("c", "canvas from DrawHistogram", 700, 500);
+    c->cd();
+    h->Draw();
+    TString x = h->GetXaxis()->GetTitle();
+    TString y = h->GetYaxis()->GetTitle();
+    SetDrawOptions(h, x, y);
+    return c;
+}
+
 template<typename Hist>
 void SetDrawOptions(Hist* h, TString x_label, TString  y_label)
 {
-    cout << "\nx: " << x_label.Data();
-    cout << "\ny: " << y_label.Data() << endl;
     h->SetStats(0);
 
     h->SetFillColor(kBlue+3);
