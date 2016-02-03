@@ -21,6 +21,7 @@ BrandonStyle->SetTitleOffset(1.2,"y");
 // Default Pad Options
 
 BrandonStyle->SetPadLeftMargin(0.15);
+BrandonStyle->SetPadBottomMargin(0.15);
 BrandonStyle->SetPadBorderMode(0);
 BrandonStyle->SetCanvasBorderMode(0);
 BrandonStyle->SetFrameBorderMode(0);
