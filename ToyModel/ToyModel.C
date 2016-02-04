@@ -84,7 +84,7 @@ void ToyModel()
         for (Int_t i_bkg = 0; i_bkg < nBkg; i_bkg++)
         {
             // Generate trigger eta and phi.
-            eta = -1.00 + 2.00*rand->Rndm();
+            eta = rand->Uniform(-1.00, 1.00);
             phi = 2*pi*rand->Rndm();
             pt = GetTrackPt();
             t_bkg->Fill();
