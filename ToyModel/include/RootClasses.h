@@ -25,7 +25,7 @@
 // Function Prototypes
 // -----------------------------------------------------------------------------
 template<typename Hist>
-void SetDrawOptions(Hist* h, TString x_label, TString  y_label);
+void SetDrawOptions(Hist* h, TString x_label="", TString  y_label="");
 
 template<typename Hist>
 TCanvas* DrawHistogram(Hist* h);
@@ -51,7 +51,7 @@ TCanvas* DrawHistogram(Hist* h)
 }
 
 template<typename Hist>
-void SetDrawOptions(Hist* h, TString x_label, TString  y_label)
+void SetDrawOptions(Hist* h, TString x_label="", TString  y_label="")
 {
     h->SetStats(0);
 
@@ -61,11 +61,14 @@ void SetDrawOptions(Hist* h, TString x_label, TString  y_label)
     h->SetLineWidth(2);
     h->SetFillStyle(3365);
 
-    h->SetTitle("");
-    h->GetXaxis()->SetTitle(x_label.Data());
-    h->GetXaxis()->SetTitleSize(0.05);
+    if (x_label != "" && y_label != "")
+    {
+        h->SetTitle("");
+        h->GetXaxis()->SetTitle(x_label.Data());
+        h->GetYaxis()->SetTitle(y_label.Data());
+    }
 
-    h->GetYaxis()->SetTitle(y_label.Data());
+    h->GetXaxis()->SetTitleSize(0.05);
     h->GetYaxis()->SetTitleOffset(1.3);
     h->GetYaxis()->SetTitleSize(0.05);
 
