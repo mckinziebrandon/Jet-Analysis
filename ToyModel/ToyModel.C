@@ -12,23 +12,18 @@
 #include "./include/RootClasses.h"
 #include "./include/ToyModel.h"
 
-// ---------- Constants ----------
-const Int_t nEvents             = 100000;
-const Int_t nBkg                = 10;
-const Int_t nCanvas             = 3;
-const Int_t trig_pt_threshold   = 1;
-const Int_t parton_mass         = 0;
-const Float_t sigma_dphi       = (pi / 4) / 2;
-// -------------------------------
-
 // --------------------------------------------------------------------------------------------
 void ToyModel()
 {
     /* ------------------------------------------------------------ *
      * Object Declarations.                                         *
      * ------------------------------------------------------------ */
+    // Set eta/phi/pt index aliases.
+    const int trig  = 0;
+    const int assoc = 1;
+    const int bkg   = 2;
 
-    Float_t eta, phi, pt;
+    Float_t eta[3], phi[3], pt[3];
 
     TFile* f_out = new TFile("./rootFiles/ToyModel.root", "RECREATE");
 
@@ -37,22 +32,22 @@ void ToyModel()
 
     // Phase space: trigger.
     TTree* t_trig = new TTree("t_trig", "Trigger attributes");
-    t_trig->Branch("eta", &eta);
-    t_trig->Branch("phi", &phi);
-    t_trig->Branch("pt", &pt);
+    t_trig->Branch("eta", &eta[trig]);
+    t_trig->Branch("phi", &phi[trig]);
+    t_trig->Branch("pt", &pt[trig]);
 
     // Phase space: associated.
     TTree* t_assoc = new TTree("t_assoc", "Associated attributes");
-    t_assoc->Branch("eta", &eta);
-    t_assoc->Branch("phi", &phi);
-    t_assoc->Branch("pt", &pt);
+    t_assoc->Branch("eta", &eta[assoc]);
+    t_assoc->Branch("phi", &phi[assoc]);
+    t_assoc->Branch("pt", &pt[assoc]);
 
 
     // Phase space: background.
     TTree* t_bkg = new TTree("t_bkg", "Background attributes");
-    t_bkg->Branch("eta", &eta);
-    t_bkg->Branch("phi", &phi);
-    t_bkg->Branch("pt", &pt);
+    t_bkg->Branch("eta", &eta[bkg]);
+    t_bkg->Branch("phi", &phi[bkg]);
+    t_bkg->Branch("pt", &pt[bkg]);
 
 
     // Will randomly generate uniform eta and phi of simulated jets. 
@@ -68,25 +63,26 @@ void ToyModel()
         // Print update in 10 percent increments.
         PrintEventStatus(i_event, nEvents, 10);
 
-        // Generate trigger eta and phi.
-        eta = rand->Uniform(-1.00, 1.00);
-        phi = 2*pi*rand->Rndm();
-        pt = GetTrackPt();
+        // Generate trigger eta, phi pt.
+        eta[trig] = rand->Uniform(-1.00, 1.00);
+        phi[trig] = rand->Uniform(0., 2. * pi);
+        pt[trig]  = GetTrackPt();
         t_trig->Fill();
 
-        // Generate associated eta and phi.
-        eta = rand->Uniform(-1., 1.);
-        phi = GetAssocPhi(phi, sigma_dphi, rand);
-        pt = GetTrackPt();
+        // Generate associated eta, phi pt.
+        eta[assoc] = -eta[trig];
+        phi[assoc] = GetAssocPhi(phi[trig], sigma_dphi, rand);
+        pt[assoc]  = GetTrackPt();
         t_assoc->Fill();
 
 
+        // Generate background eta, phi pt.
         for (Int_t i_bkg = 0; i_bkg < nBkg; i_bkg++)
         {
             // Generate trigger eta and phi.
-            eta = rand->Uniform(-1.00, 1.00);
-            phi = 2*pi*rand->Rndm();
-            pt = GetTrackPt();
+            eta[bkg] = rand->Uniform(-1.00, 1.00);
+            phi[bkg] = rand->Uniform(0., 2. * pi);
+            pt[bkg]  = GetTrackPt();
             t_bkg->Fill();
         }
     }
@@ -98,7 +94,7 @@ void ToyModel()
     f_out->cd();
 
     // Create list of generic histogram identifiers for plotting.
-    TString histNames[] = {"phi", "eta", "pt", "phi:eta"};
+    TString histNames[] = {"phi", "eta", "pt", "eta:phi"};
 
     // Draw [3] [trigger] histograms from data in [t_trig].
     TCanvas* c_trigger = (TCanvas*)DrawHists(4, TString("trigger"), histNames, t_trig);
