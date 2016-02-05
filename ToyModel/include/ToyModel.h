@@ -1,15 +1,48 @@
 #ifndef TOYMODEL_H
 #define TOYMODEL_H
 
-const Float_t pi = TMath::Pi();
+// ---------- Constants ----------
+const Float_t pi    = TMath::Pi();
+const Int_t nEvents             = 100000;
+const Int_t nBkg                = 10;
+const Int_t nCanvas             = 3;
+const Int_t trig_pt_threshold   = 1;
+const Int_t parton_mass         = 0;
+const Float_t sigma_dphi       = (pi / 4) / 2;
+// -------------------------------
 
 // -----------------------------------------------------------------------------
 // Function Prototypes
 // -----------------------------------------------------------------------------
-Float_t deta(Float_t e1, Float_t e2);
+
+// My functions.
 Float_t dphi(Float_t p, Float_t p2); 
 Float_t GetAssocPhi(Float_t tp, Float_t sp, TRandom3* r);
 
+// Functions from Redmer. 
+Double_t GetTrackPt();
+
+// -----------------------------------------------------------------------------
+// Function Implementations
+// -----------------------------------------------------------------------------
+Float_t dphi(Float_t phi1,Float_t phi2)
+{
+    Float_t phimin  = 0.;
+    Float_t phimax  = 2. * pi;
+    Float_t dphi    = phi1 - phi2;
+    if (dphi > phimax)      dphi -= 2*pi;
+    else if (dphi < phimin) dphi += 2*pi;
+    return dphi;
+}
+
+Float_t GetAssocPhi(Float_t trig_phi, Float_t sigma_dphi, TRandom3* rand)
+{
+    Float_t assoc_phi_mean = (trig_phi >=  pi) ? trig_phi - pi : trig_phi + pi;
+    Float_t phi_random = rand->Gaus(assoc_phi_mean, sigma_dphi);
+    if (phi_random < 0.) return phi_random + 2 * pi;
+    else if (phi_random > 2 * pi) return phi_random - 2 * pi;
+    return phi_random;
+}
 
 TF1* GetSpectrum() {
     /* Todo: Understand this function . . . */
@@ -34,7 +67,6 @@ TF1* GetThermalSpectrum() {
 }
 
 // some extra functions which are called in the track loop (below)
-
 // select your total pt spectrum
 TF1* fTrackSpectrum = GetSpectrum();
 
@@ -42,35 +74,5 @@ TF1* fTrackSpectrum = GetSpectrum();
 Double_t GetTrackPt() { 
     return fTrackSpectrum->GetRandom();
 }
-
-// -----------------------------------------------------------------------------
-// Function Implementations
-// -----------------------------------------------------------------------------
-Float_t dphi(Float_t phi1,Float_t phi2)
-{
-    //Float_t phimin = -0.5 * pi;
-    //Float_t phimax = 1.5 * pi;
-    Float_t phimin = 0.;
-    Float_t phimax = 2.*pi;
-    Float_t dphi = phi1-phi2;
-    if (dphi > phimax) dphi -= 2*pi;
-    if (dphi < phimin) dphi += 2*pi;
-    return dphi;
-}
-
-Float_t deta(Float_t e1, Float_t e2) 
-{
-    return TMath::Abs(e1 - e2);
-}
-
-Float_t GetAssocPhi(Float_t trig_phi, Float_t sigma_dphi, TRandom3* rand)
-{
-    Float_t assoc_phi_mean = (trig_phi >=  pi) ? trig_phi - pi : trig_phi + pi;
-    Float_t phi_random = rand->Gaus(assoc_phi_mean, sigma_dphi);
-    if (phi_random < 0.) return phi_random + 2 * pi;
-    else if (phi_random > 2 * pi) return phi_random - 2 * pi;
-    return phi_random;
-}
-
 
 #endif
