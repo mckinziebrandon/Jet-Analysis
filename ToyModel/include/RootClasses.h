@@ -13,7 +13,9 @@
 #include "TH2.h"
 #include "TH2F.h"
 #include "TLatex.h"
+#include "TLegend.h"
 #include "TMath.h"
+#include "TNtuple.h"
 #include "TPad.h"
 #include "TRandom.h"
 #include "TRandom3.h"
@@ -57,7 +59,7 @@ void SetDrawOptions(Hist* h, TString x_label="", TString  y_label="")
     h->SetFillColor(kBlue+3);
     h->SetLineColor(kBlue+3);
     h->SetLineWidth(2);
-    h->SetFillStyle(3365);
+    h->SetFillStyle(0);
     if (x_label != "" && y_label != "")
     {
         h->SetTitle("");

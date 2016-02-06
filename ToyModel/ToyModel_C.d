@@ -117,14 +117,18 @@
 ./ToyModel_C.so: /home/student/root/include/TH2F.h
 ./ToyModel_C.so: /home/student/root/include/TLatex.h
 ./ToyModel_C.so: /home/student/root/include/TText.h
-./ToyModel_C.so: /home/student/root/include/TRandom.h
-./ToyModel_C.so: /home/student/root/include/TRandom3.h
+./ToyModel_C.so: /home/student/root/include/TLegend.h
+./ToyModel_C.so: /home/student/root/include/TPave.h
+./ToyModel_C.so: /home/student/root/include/TBox.h
+./ToyModel_C.so: /home/student/root/include/TNtuple.h
 ./ToyModel_C.so: /home/student/root/include/TTree.h
 ./ToyModel_C.so: /home/student/root/include/TClass.h
 ./ToyModel_C.so: /home/student/root/include/TObjString.h
 ./ToyModel_C.so: /usr/include/c++/4.8/set /usr/include/c++/4.8/unordered_set
 ./ToyModel_C.so: /home/student/root/include/ThreadLocalStorage.h
 ./ToyModel_C.so: /home/student/root/include/TVirtualTreePlayer.h
+./ToyModel_C.so: /home/student/root/include/TRandom.h
+./ToyModel_C.so: /home/student/root/include/TRandom3.h
 ./ToyModel_C.so: ./include/RootClasses.h ./include/ToyModel.h
 ./ToyModel_C.so: /home/student/root/include/RVersion.h /home/student/root/include/RConfig.h /home/student/root/include/TClass.h /home/student/root/include/TDictAttributeMap.h /home/student/root/include/TInterpreter.h /home/student/root/include/TROOT.h /home/student/root/include/TBuffer.h /home/student/root/include/TMemberInspector.h /home/student/root/include/TError.h /home/student/root/include/RtypesImp.h /home/student/root/include/TIsAProxy.h /home/student/root/include/TFileMergeInfo.h /home/student/root/include/TCollectionProxyInfo.h
 ToyModel_C__ROOTBUILDVERSION= 6.05/02

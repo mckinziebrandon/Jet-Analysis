@@ -1,6 +1,6 @@
 /********************************************************************************************
-* Filename:     PlotModel.C                                                                 *
-* Date Created: January 28, 2016                                                            *
+* Filename:     PlotWithV2.C                                                                 t*
+* Date Created: February 6, 2016
 * Author:       Brandon McKinzie                                                            *
 * Description:  Plot differences in trigger and associated:                                 *
 *                   1. deltaPhi                                                             *
@@ -17,7 +17,12 @@
 // --------------------------------------------------------------------------------------------
 void PlotModel()
 {
+    // Set eta/phi/pt index aliases.
+    const int trig  = 0;
+    const int assoc = 1;
+    const int bkg   = 2;
 
+    Float_t dNdPhi;
     Float_t eta[3], phi[3], pt[3];
 
     /* ------------------------------------------------------------ *
@@ -32,6 +37,7 @@ void PlotModel()
     t_trig->SetBranchAddress("eta", &eta[trig]);
     t_trig->SetBranchAddress("phi", &phi[trig]);
     t_trig->SetBranchAddress("pt", &pt[trig]);
+    t_trig->SetBranchAddress("dNdPhi", &dNdPhi);
 
     // Phase space: associated.
     TTree* t_assoc = (TTree*)f_trees->Get("t_assoc;1");
@@ -68,9 +74,12 @@ void PlotModel()
      * ---------------------------------------------------- */
 
     // Loop over tree entries.
+    assert(t_trig->GetEntries() == t_assoc->GetEntries());
+    assert(t_bkg->GetEntries() == 10 * t_trig->GetEntries());
+    const Int_t nEntries = t_trig->GetEntries();
     for (Int_t i_event = 0; i_event < nEvents; i_event++)
     {
-        PrintEventStatus(i_event, nEvents, 10);
+        PrintEventStatus(i_event, nEntries, 10);
 
         // Store ith event variables in eta[], phi[], pt[].
         t_trig->GetEntry(i_event);
@@ -107,6 +116,7 @@ void PlotModel()
      * Drawing and Saving.                                          *
      * ------------------------------------------------------------ */
 
+    /*
     TCanvas * c_delta = new TCanvas("c_delta", "canvas delta", 1000, 500);
     c_delta->Divide(3, 1);
 
@@ -150,5 +160,8 @@ void PlotModel()
     SetDrawOptions(h_dphi_deta);
 
     c_delta->Write();
+    */
+
+    t_trig->Draw("phi", "dNdPhi");
 
 }

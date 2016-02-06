@@ -18,12 +18,8 @@ void ToyModel()
     /* ------------------------------------------------------------ *
      * Object Declarations.                                         *
      * ------------------------------------------------------------ */
-    // Set eta/phi/pt index aliases.
-    const int trig  = 0;
-    const int assoc = 1;
-    const int bkg   = 2;
 
-    Float_t eta[3], phi[3], pt[3];
+    Float_t eta, phi, pt;
 
     TFile* f_out = new TFile("./rootFiles/ToyModel.root", "RECREATE");
 
@@ -32,23 +28,21 @@ void ToyModel()
 
     // Phase space: trigger.
     TTree* t_trig = new TTree("t_trig", "Trigger attributes");
-    t_trig->Branch("eta", &eta[trig]);
-    t_trig->Branch("phi", &phi[trig]);
-    t_trig->Branch("pt", &pt[trig]);
+    t_trig->Branch("eta", &eta);
+    t_trig->Branch("phi", &phi);
+    t_trig->Branch("pt", &pt);
 
     // Phase space: associated.
     TTree* t_assoc = new TTree("t_assoc", "Associated attributes");
-    t_assoc->Branch("eta", &eta[assoc]);
-    t_assoc->Branch("phi", &phi[assoc]);
-    t_assoc->Branch("pt", &pt[assoc]);
-
+    t_assoc->Branch("eta", &eta);
+    t_assoc->Branch("phi", &phi);
+    t_assoc->Branch("pt", &pt);
 
     // Phase space: background.
     TTree* t_bkg = new TTree("t_bkg", "Background attributes");
-    t_bkg->Branch("eta", &eta[bkg]);
-    t_bkg->Branch("phi", &phi[bkg]);
-    t_bkg->Branch("pt", &pt[bkg]);
-
+    t_bkg->Branch("eta", &eta);
+    t_bkg->Branch("phi", &phi);
+    t_bkg->Branch("pt", &pt);
 
     // Will randomly generate uniform eta and phi of simulated jets. 
     TRandom3* rand = new TRandom3();
@@ -64,15 +58,15 @@ void ToyModel()
         PrintEventStatus(i_event, nEvents, 10);
 
         // Generate trigger eta, phi pt.
-        eta[trig] = rand->Uniform(-1.00, 1.00);
-        phi[trig] = rand->Uniform(0., 2. * pi);
-        pt[trig]  = GetTrackPt();
+        phi = GetdNdPhi(0);
+        eta = rand->Uniform(-1.00, 1.00);
+        pt  = GetTrackPt();
         t_trig->Fill();
 
         // Generate associated eta, phi pt.
-        eta[assoc] = -eta[trig];
-        phi[assoc] = GetAssocPhi(phi[trig], sigma_dphi, rand);
-        pt[assoc]  = GetTrackPt();
+        eta = -eta;
+        phi = GetAssocPhi(phi, sigma_dphi, rand);
+        pt  = GetTrackPt();
         t_assoc->Fill();
 
 
@@ -80,9 +74,9 @@ void ToyModel()
         for (Int_t i_bkg = 0; i_bkg < nBkg; i_bkg++)
         {
             // Generate trigger eta and phi.
-            eta[bkg] = rand->Uniform(-1.00, 1.00);
-            phi[bkg] = rand->Uniform(0., 2. * pi);
-            pt[bkg]  = GetTrackPt();
+            eta = rand->Uniform(-1.00, 1.00);
+            phi = GetdNdPhi(2);
+            pt  = GetTrackPt();
             t_bkg->Fill();
         }
     }
@@ -92,7 +86,11 @@ void ToyModel()
      * ------------------------------------------------------------ */
 
     f_out->cd();
+    t_trig->Write("", TObject::kOverwrite);
+    t_assoc->Write("", TObject::kOverwrite);
+    t_bkg->Write("", TObject::kOverwrite);
 
+    /*
     // Create list of generic histogram identifiers for plotting.
     TString histNames[] = {"phi", "eta", "pt", "eta:phi"};
 
@@ -110,6 +108,5 @@ void ToyModel()
     TCanvas* c_bkg = (TCanvas*)DrawHists(4, TString("background"), histNames, t_bkg);
     c_bkg->Write();
     c_bkg->Close();
-
-    f_out->Write();
+    */
 }
