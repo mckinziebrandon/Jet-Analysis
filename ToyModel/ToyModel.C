@@ -8,7 +8,6 @@
 ********************************************************************************************/
 #include <iostream>
 #include <fstream>
-#include "./include/PrintFunctions.h"
 #include "./include/RootClasses.h"
 #include "./include/ToyModel.h"
 
@@ -54,13 +53,14 @@ void ToyModel()
     // Simulate nEvents with randomly generated tracks. 
     for (Int_t i_event = 0; i_event < nEvents; i_event++)
     {
-        // Print update in 10 percent increments.
-        PrintEventStatus(i_event, nEvents, 10);
+        if (i_event % (nEvents / 100) == 0)
+            std::cout << (Float_t)(i_event * 100)/nEvents << " Percent Complete." << std::endl;
 
-        // Generate trigger eta, phi pt.
-        phi = GetdNdPhi(0);
+        // Generate trigger eta, pt, and v2(pt).
         eta = rand->Uniform(-1.00, 1.00);
         pt  = GetTrackPt();
+        phi = GetTriggerPhi(pt);
+        phi = 6;
         t_trig->Fill();
 
         // Generate associated eta, phi pt.
@@ -75,8 +75,9 @@ void ToyModel()
         {
             // Generate trigger eta and phi.
             eta = rand->Uniform(-1.00, 1.00);
-            phi = GetdNdPhi(2);
             pt  = GetTrackPt();
+            phi = GetTriggerPhi(pt);
+            phi = 6;
             t_bkg->Fill();
         }
     }
@@ -90,7 +91,6 @@ void ToyModel()
     t_assoc->Write("", TObject::kOverwrite);
     t_bkg->Write("", TObject::kOverwrite);
 
-    /*
     // Create list of generic histogram identifiers for plotting.
     TString histNames[] = {"phi", "eta", "pt", "eta:phi"};
 
@@ -108,5 +108,4 @@ void ToyModel()
     TCanvas* c_bkg = (TCanvas*)DrawHists(4, TString("background"), histNames, t_bkg);
     c_bkg->Write();
     c_bkg->Close();
-    */
 }

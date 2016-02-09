@@ -1,5 +1,7 @@
 #ifndef ROOTCLASSES_H
 #define ROOTCLASSES_H
+#include <iostream>
+using namespace std;
 
 #include "TBranch.h"
 #include "TCanvas.h"
@@ -8,6 +10,8 @@
 #include "TF1.h"
 #include "TFile.h"
 #include "TGenPhaseSpace.h"
+#include "TGraph.h"
+#include "TGraphAsymmErrors.h"
 #include "TH1.h"
 #include "TH1F.h"
 #include "TH2.h"
@@ -28,11 +32,13 @@ TString HistName;
 // Function Prototypes
 // -----------------------------------------------------------------------------
 
+/*
 template<typename Hist>
 void SetDrawOptions(Hist* h, TString x_label="", TString  y_label="");
 template<typename Hist>
 TCanvas* DrawHistogram(Hist* h);
 TCanvas* DrawHists(const Int_t n, TString index, TString names[], TTree* tree);
+*/
 
 // -----------------------------------------------------------------------------
 // Function Implementations

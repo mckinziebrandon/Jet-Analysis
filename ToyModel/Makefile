@@ -1,29 +1,32 @@
 
-#ToyModel: 
-#	g++ -Wall -I$(ROOTSYS)/include -L$(ROOTSYS)/lib ToyModel.C -lCore -lHist -lCint -lRIO -lTree -lGpad ToyModel.o -o ToyModel
+SOURCES=ToyModel.C ./lib/ToyModel.cxx
+EXECUTABLE=ToyModel
 
+CXX = g++ -W -Wall -Wextra -pedantic -std=c++11
+ROOTCFLAGS=$(shell root-config --cflags)
+ROOTLIBS      = $(shell root-config --libs)
+ROOTGLIBS     = $(root-config --glibs)
+ROOTLIBS     += -lEG
+
+INCFLAGS = -I$(ROOTSYS)/include
+LDFLAGS = -L$(ROOTSYS)/lib
+
+FLAGS = -Wall -g $(INCFLAGS) $(LDFLAGS) -fPIC
+
+COMPILE = $(CXX) $(FLAGS) -c
+
+EXE=ToyModel
+
+
+
+ToyModel: 
+	$(CXX) -o $(EXE) $(ROOTCFLAGS) $(ROOTLIBS) -m64 -lCore -lHist -lRIO -lTree -lGpad ToyModel.C ./lib/ToyModel.cxx
+#	g++ -Wall -c -I$(ROOTSYS)/include/  -L$(ROOTSYS)/lib/ ToyModel.C -lCore -lHist -lCint -lRIO -lTree -lGpad -o ToyModel
 
 #ToyModel: ToyModel.C
 #	g++ -L$(ROOTSYS)/lib -I$(ROOTSYS)/include -Wall -c ToyModel.C -o ./lib
 
 
 
-#CC=g++
-#CFLAGS=-c -g -Wall `root-config --cflags`
-#LDFLAGS=`root-config --glibs`
-#SOURCES=ToyModel.C
-#OBJECTS=$(SOURCES:.cc=.o)
-#EXECUTABLE=main
-##
-#all: $(SOURCES) $(EXECUTABLE)
-#
-#$(EXECUTABLE): $(OBJECTS)
-#	   $(CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) -o ToyModel
-#
-#.cc.o:
-#	   $(CC) $(CFLAGS) $< -o $@
-
 clean:
-	   rm *.pcm *.so *.d
-
-
+	rm *.pcm *.so *.d
