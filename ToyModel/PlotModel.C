@@ -70,7 +70,8 @@ void PlotModel()
     // Loop over tree entries.
     for (Int_t i_event = 0; i_event < nEvents; i_event++)
     {
-        PrintEventStatus(i_event, nEvents, 10);
+        if (i_event % (nEvents / 10) == 0) 
+            PrintEventStatus(i_event, nEvents, 10);
 
         // Store ith event variables in eta[], phi[], pt[].
         t_trig->GetEntry(i_event);

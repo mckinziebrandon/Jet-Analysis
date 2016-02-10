@@ -20,21 +20,19 @@ const Float_t sigma_dphi        = (pi / 4) / 2;
 // Function Prototypes
 // -----------------------------------------------------------------------------
 
-// My functions.
+// Prototypes that return a numerical value.
 Float_t dphi(Float_t p, Float_t p2); 
-Float_t GetTriggerPhi(Float_t pt);
+Float_t GetTriggerPhi(Float_t pt, TF1* f);
 Float_t GetAssocPhi(Float_t tp, Float_t sp, TRandom3* r);
-TF1* funcV2();
+
+// Prototypes that return some function.
 TF1* dNdPhi();
 TF1* GetSpectrum();
 
-TF1* fV2 = funcV2();
-TF1* fdNdPhi = dNdPhi();
-TF1* fTrackSpectrum = GetSpectrum();
+extern TF1* fdNdPhi;
+extern TF1* fTrackSpectrum;
 
-Double_t GetTrackPt() { return fTrackSpectrum->GetRandom(); }
-Float_t GetV2(Float_t pt) { return fV2->Eval(pt); }
-// -----------------------------------------------------------------------------
-// TF1 Function Definitions
-// -----------------------------------------------------------------------------
+// Small inline functions. 
+inline Double_t GetTrackPt() { return fTrackSpectrum->GetRandom(); }
+
 #endif

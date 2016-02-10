@@ -11,6 +11,7 @@
 #include "./include/RootClasses.h"
 #include "./include/ToyModel.h"
 
+
 // --------------------------------------------------------------------------------------------
 void ToyModel()
 {
@@ -19,6 +20,18 @@ void ToyModel()
      * ------------------------------------------------------------ */
 
     Float_t eta, phi, pt;
+
+    TF1* fPolynomial    = new TF1("fPolynomial", "pol3", 0., 5.);
+    TF1* fLine          = new TF1("fLine", "[0] + [1] * x", 5., 18.);
+    fLine->SetParameter(0, 0.15);
+    fLine->SetParameter(1, -0.1 / 10.);
+
+    TFile* file_v2  = new TFile("./rootFiles/ALICE_v2pt.root");
+    TGraph* g       = (TGraphAsymmErrors*)file_v2->Get("v2Plot_2;1");
+
+
+    g->Fit(fPolynomial, "RQ");
+    g->Fit(fPolynomial, "RQ+");
 
     TFile* f_out = new TFile("./rootFiles/ToyModel.root", "RECREATE");
 
@@ -46,6 +59,7 @@ void ToyModel()
     // Will randomly generate uniform eta and phi of simulated jets. 
     TRandom3* rand = new TRandom3();
 
+
     /* ---------------------------------------------------- *
      * Data Generation/Simulation.                          *       
      * ---------------------------------------------------- */
@@ -53,14 +67,14 @@ void ToyModel()
     // Simulate nEvents with randomly generated tracks. 
     for (Int_t i_event = 0; i_event < nEvents; i_event++)
     {
-        if (i_event % (nEvents / 100) == 0)
+        if (i_event % (nEvents / 10) == 0)
             std::cout << (Float_t)(i_event * 100)/nEvents << " Percent Complete." << std::endl;
 
         // Generate trigger eta, pt, and v2(pt).
-        eta = rand->Uniform(-1.00, 1.00);
         pt  = GetTrackPt();
-        phi = GetTriggerPhi(pt);
-        phi = 6;
+        if (pt > 5) phi = GetTriggerPhi(pt, fLine);
+        else        phi = GetTriggerPhi(pt, fPolynomial);
+        eta = rand->Uniform(-1.00, 1.00);
         t_trig->Fill();
 
         // Generate associated eta, phi pt.
@@ -74,13 +88,15 @@ void ToyModel()
         for (Int_t i_bkg = 0; i_bkg < nBkg; i_bkg++)
         {
             // Generate trigger eta and phi.
-            eta = rand->Uniform(-1.00, 1.00);
             pt  = GetTrackPt();
-            phi = GetTriggerPhi(pt);
-            phi = 6;
+        //    phi = GetTriggerPhi(pt);
+            phi = 6.;
+            eta = rand->Uniform(-1.00, 1.00);
             t_bkg->Fill();
         }
     }
+
+    delete rand;
 
     /* ------------------------------------------------------------ *
      * Drawing and Saving.                                          *
@@ -91,6 +107,7 @@ void ToyModel()
     t_assoc->Write("", TObject::kOverwrite);
     t_bkg->Write("", TObject::kOverwrite);
 
+    /*
     // Create list of generic histogram identifiers for plotting.
     TString histNames[] = {"phi", "eta", "pt", "eta:phi"};
 
@@ -108,4 +125,23 @@ void ToyModel()
     TCanvas* c_bkg = (TCanvas*)DrawHists(4, TString("background"), histNames, t_bkg);
     c_bkg->Write();
     c_bkg->Close();
+    */
+
+    delete t_trig;
+    delete t_assoc;
+    delete t_bkg;
+    delete fPolynomial;
+    delete fLine;
+    delete g;
+    delete file_v2;
+    delete f_out;
+
 }
+
+#ifndef __CINT__
+int main() 
+{
+    ToyModel();
+    return 0;
+}
+#endif
