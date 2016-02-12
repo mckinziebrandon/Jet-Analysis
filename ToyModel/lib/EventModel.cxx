@@ -45,7 +45,7 @@ Float_t EventModel::GetTriggerPhi(Float_t pt)
 {
     Float_t v2;
     if (pt > 5) v2 = fLine->Eval(pt);
-    else v2 = fPolynomial->Eval(pt);
+    else        v2 = fPolynomial->Eval(pt);
     fdNdPhi->SetParameter("v2", v2);
     return fdNdPhi->GetRandom();
 }
@@ -95,7 +95,7 @@ Double_t EventModel::GetTrackPt() { return fTrackSpectrum->GetRandom(); }
 ================================================================================*/
 
 
-TF1* EventModel::GetfPolynomial() { reurn new TF1("fPolynomial", "pol3", 0., 5.); }
+TF1* EventModel::GetfPolynomial() { return new TF1("fPolynomial", "pol3", 0., 5.); }
 
 TF1* EventModel::GetfLine() 
 {
