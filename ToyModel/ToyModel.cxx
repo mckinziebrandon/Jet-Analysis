@@ -9,7 +9,7 @@
 #include <iostream>
 #include <fstream>
 #include "./include/RootClasses.h"
-#include "./include/ToyModel.h"
+#include "./include/EventModel.h"
 
 
 // --------------------------------------------------------------------------------------------
@@ -19,19 +19,8 @@ void ToyModel()
      * Object Declarations.                                         *
      * ------------------------------------------------------------ */
 
+    EventModel* event = new EventModel();
     Float_t eta, phi, pt;
-
-    TF1* fPolynomial    = new TF1("fPolynomial", "pol3", 0., 5.);
-    TF1* fLine          = new TF1("fLine", "[0] + [1] * x", 5., 18.);
-    fLine->SetParameter(0, 0.15);
-    fLine->SetParameter(1, -0.1 / 10.);
-
-    TFile* file_v2  = new TFile("./rootFiles/ALICE_v2pt.root");
-    TGraph* g       = (TGraphAsymmErrors*)file_v2->Get("v2Plot_2;1");
-
-
-    g->Fit(fPolynomial, "RQ");
-    g->Fit(fPolynomial, "RQ+");
 
     TFile* f_out = new TFile("./rootFiles/ToyModel.root", "RECREATE");
 
@@ -56,10 +45,6 @@ void ToyModel()
     t_bkg->Branch("phi", &phi);
     t_bkg->Branch("pt", &pt);
 
-    // Will randomly generate uniform eta and phi of simulated jets. 
-    TRandom3* rand = new TRandom3();
-
-
     /* ---------------------------------------------------- *
      * Data Generation/Simulation.                          *       
      * ---------------------------------------------------- */
@@ -71,32 +56,34 @@ void ToyModel()
             std::cout << (Float_t)(i_event * 100)/nEvents << " Percent Complete." << std::endl;
 
         // Generate trigger eta, pt, and v2(pt).
-        pt  = GetTrackPt();
-        if (pt > 5) phi = GetTriggerPhi(pt, fLine);
-        else        phi = GetTriggerPhi(pt, fPolynomial);
-        eta = rand->Uniform(-1.00, 1.00);
+        pt  = event->GetTrackPt();
+        phi = event->GetTriggerPhi(pt); 
+        eta = event->GetRandEta();
         t_trig->Fill();
 
         // Generate associated eta, phi pt.
         eta = -eta;
-        phi = GetAssocPhi(phi, sigma_dphi, rand);
-        pt  = GetTrackPt();
+        phi = event->GetAssocPhi(phi, sigma_dphi);
+        pt  = event->GetTrackPt();
         t_assoc->Fill();
 
-
         // Generate background eta, phi pt.
-        for (Int_t i_bkg = 0; i_bkg < nBkg; i_bkg++)
+        #pragma omp parallel for
+        for (Int_t i_bkg = 0; i_bkg < nBkg / 2; i_bkg++)
         {
             // Generate trigger eta and phi.
-            pt  = GetTrackPt();
-        //    phi = GetTriggerPhi(pt);
-            phi = 6.;
-            eta = rand->Uniform(-1.00, 1.00);
+            pt  = event->GetTrackPt();
+            phi = event->GetTriggerPhi(pt);
+            eta = event->GetRandEta();
+            t_bkg->Fill();
+
+            pt  = event->GetTrackPt();
+            phi = event->GetTriggerPhi(pt);
+            eta = event->GetRandEta();
             t_bkg->Fill();
         }
     }
-
-    delete rand;
+    
 
     /* ------------------------------------------------------------ *
      * Drawing and Saving.                                          *
@@ -107,7 +94,6 @@ void ToyModel()
     t_assoc->Write("", TObject::kOverwrite);
     t_bkg->Write("", TObject::kOverwrite);
 
-    /*
     // Create list of generic histogram identifiers for plotting.
     TString histNames[] = {"phi", "eta", "pt", "eta:phi"};
 
@@ -125,15 +111,10 @@ void ToyModel()
     TCanvas* c_bkg = (TCanvas*)DrawHists(4, TString("background"), histNames, t_bkg);
     c_bkg->Write();
     c_bkg->Close();
-    */
 
     delete t_trig;
     delete t_assoc;
     delete t_bkg;
-    delete fPolynomial;
-    delete fLine;
-    delete g;
-    delete file_v2;
     delete f_out;
 
 }

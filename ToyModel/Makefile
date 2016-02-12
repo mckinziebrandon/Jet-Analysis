@@ -3,13 +3,17 @@ ROOTCFLAGS 	=`root-config --cflags`
 ROOTLIBS 	= `root-config --libs`
 ROOTGLIBS   = `root-config --glibs`
 
-DEPS= ./include/ToyModel.h ./include/RootClasses.h
-OBJ= ToyModel.so ./lib/ToyModel.so ./lib/RootClasses.so
+DEPS= ./include/EventModel.h ./include/RootClasses.h
+OBJ1= ToyModel.so ./lib/EventModel.so ./lib/RootClasses.so
+OBJ2= PlotModel.so ./lib/EventModel.so ./lib/RootClasses.so 
 
 %.so: %.cxx $(DEPS)
 	$(CXX) -c -o $@ $< $(ROOTCFLAGS) $(ROOTLIBS)
 
-ToyModel: $(OBJ)
+ToyModel: $(OBJ1)
+	$(CXX) -o $@ $^ $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
+
+PlotModel: $(OBJ2)
 	$(CXX) -o $@ $^ $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
 
 clean:
