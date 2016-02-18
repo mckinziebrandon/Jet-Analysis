@@ -16,6 +16,7 @@ using namespace std;
 #include "TH1F.h"
 #include "TH2.h"
 #include "TH2F.h"
+#include "THStack.h"
 #include "TLatex.h"
 #include "TLegend.h"
 #include "TMath.h"

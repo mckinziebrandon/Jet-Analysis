@@ -1,11 +1,8 @@
 /********************************************************************************************
-* Filename:     PlotModel.C                                                                 *
-* Date Created: January 28, 2016                                                            *
+* Filename:     CheckV2Plots.cxx
+* Date Created: February 17, 2016
 * Author:       Brandon McKinzie                                                            *
-* Description:  Plot differences in trigger and associated:                                 *
-*                   1. deltaPhi                                                             *
-*                   2. deltaEta                                                             *
-*                   3. deltaEta vs. deltaPhi                                                *
+* Description:  hi
 ********************************************************************************************/
 #include <iostream>
 #include <fstream>
@@ -14,8 +11,10 @@
 #include "./include/EventModel.h"
 
 // --------------------------------------------------------------------------------------------
-void PlotModel()
+void CheckV2Plots()
 {
+    const int nobkg = 0;    const int noV2  = 0;
+    const int bkg   = 1;    const int V2    = 1; 
 
     Float_t eta[3], phi[3], pt[3];
     TString HistName;
@@ -49,19 +48,18 @@ void PlotModel()
     f_out->cd();
 
     // Create deltaPhi histograms.
-    HistName = ";#Delta#phi;dN/d#Delta#phi";
-    TH1F* h_dphi     = new TH1F("h_dphi", HistName.Data(), 100, 0., 2*pi);
-    TH1F* h_dphi_bkg = new TH1F("h_dphi_bkg", HistName.Data(), 100, 0., 2*pi);
-
-    // Create deltaEta histograms.
-    HistName = ";#Delta#eta;dN/d#Delta#eta";
-    TH1F* h_deta     = new TH1F("h_deta", HistName.Data(), 80, -2., 2.);
-    TH1F* h_deta_bkg = new TH1F("h_deta_bkg", HistName.Data(), 80, -2., 2.);
-
-    // Create 2D dPhidEta histograms.
-    HistName = ";#Delta#phi;#Delta#eta";
-    TH2F* h_dphi_deta     = new TH2F("h_dphi_deta", HistName.Data(), 100, 0., 2*pi, 80, -2., 2.);
-    TH2F* h_dphi_deta_bkg = new TH2F("h_dphi_deta_bkg", HistName.Data(), 100, 0., 2*pi, 80, -2., 2.);
+    TH1F* h_dphi[2][2];
+    for (int i = 0; i < 2; i++) 
+    {
+        for (int j = 0; j < 2; j++) 
+        {
+            HistName  = "h_dphi_";
+            HistName += i;
+            HistName += "_";
+            HistName += j;
+            h_dphi[i][j] = new TH1F(HistName.Data(), HistName.Data(), 100, 0., 2*pi);
+        }
+    }
 
     /* ---------------------------------------------------- *
      * Data Processing.                                     *

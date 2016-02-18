@@ -1,11 +1,18 @@
 #include "../include/EventModel.h"
 
+ClassImp(EventModel)
+
 /************************************
 * Default EventModel Constructor.   *
 * Initializes all instance objects. *
 *************************************/
-EventModel::EventModel() 
+EventModel::EventModel(Bool_t bkg_on, Bool_t v2_on): TNamed()
 {
+    TNamed("hello","how are you");
+    // Initialize event switches.
+    has_bkg = bkg_on;
+    has_V2  = v2_on;
+
     // Initialize instance attribute functions.
     fPolynomial     = (TF1*)GetfPolynomial();
     fLine           = (TF1*)GetfLine();
@@ -37,17 +44,64 @@ EventModel::~EventModel()
     delete rand;
 }
 
+// uno
+void EventModel::SetTrigger(Float_t &pt, Float_t &eta, Float_t &phi)
+{
+    pt  = GetTrackPt();
+    eta = GetRandEta();
+    phi = GetTriggerPhi(pt); 
+}
+
+// dos
+void EventModel::SetJet(Float_t &pt, Float_t &eta, Float_t &phi)
+{
+    Float_t trigger_phi = phi;
+    eta = -eta;
+    pt  = GetTrackPt();
+    phi = GetAssocPhi(pt, trigger_phi, sigma_dphi);
+}
+
+// tres
+void EventModel::SetBackground(Float_t &pt, Float_t &eta, Float_t &phi)
+{
+    pt  = GetTrackPt();
+    phi = GetTriggerPhi(pt);
+    eta = GetRandEta();
+}
+
 /****************************************************
 * Returns random value of phi that depends on       *
 * the value of v2(pt) input parameter for dN/dPhi.  *
 *****************************************************/
 Float_t EventModel::GetTriggerPhi(Float_t pt) 
 {
-    Float_t v2;
-    if (pt > 5) v2 = fLine->Eval(pt);
-    else        v2 = fPolynomial->Eval(pt);
-    fdNdPhi->SetParameter("v2", v2);
+    fdNdPhi->SetParameter("v2", GetV2(pt));
     return fdNdPhi->GetRandom();
+}
+
+
+/********************************************************************************
+* Similar to dphi(p1, p2), this returns a deltaPhi, but with a gaussian spread  *
+* centered at pi from the trigger particle.                                     *
+*********************************************************************************/
+Float_t EventModel::GetAssocPhi(Float_t pt, Float_t trig_phi, Float_t sigma_dphi)
+{
+    // Setup. 
+    Float_t assoc_phi_mean, result;
+
+    // Get the average phi, centered at pi w.r.t. the trigger.
+    assoc_phi_mean  = trig_phi + pi;
+    if (assoc_phi_mean > 2 * pi) 
+        assoc_phi_mean -= 2 * pi;
+
+    // Create superposition of gaussian and modulation in phi.
+    TF1* f_v2_gaus = new TF1("f_v2_gaus", "gaus(0)+1+2*[3]*TMath::Cos(2.*x)", 0, 2*pi);
+    f_v2_gaus->SetParameters(1, assoc_phi_mean, sigma_dphi, GetV2(pt));
+
+    // Store random value of modulated function and clean up. 
+    result = f_v2_gaus->GetRandom();
+    delete f_v2_gaus;
+    return result;
 }
 
 /****************************************************
@@ -56,29 +110,9 @@ Float_t EventModel::GetTriggerPhi(Float_t pt)
 *****************************************************/
 Float_t EventModel::dphi(Float_t phi1, Float_t phi2) 
 {
-    Float_t phimin  = 0.;
-    Float_t phimax  = 2. * pi;
     Float_t dphi    = phi1 - phi2;
-    if (dphi > phimax)      dphi -= 2*pi;
-    else if (dphi < phimin) dphi += 2*pi;
+    if (dphi < 0) return dphi + 2 * pi;
     return dphi;
-}
-
-/********************************************************************************
-* Similar to dphi(p1, p2), this returns a deltaPhi, but with a gaussian spread  *
-* centered at pi from the trigger particle.                                     *
-*********************************************************************************/
-Float_t EventModel::GetAssocPhi(Float_t trig_phi, Float_t sigma_dphi)
-{
-    Float_t assoc_phi_mean  = (trig_phi >=  pi) ? trig_phi - pi : trig_phi + pi;
-    Float_t phi_random      = rand->Gaus(assoc_phi_mean, sigma_dphi);
-
-    if (phi_random < 0.) 
-        return phi_random + 2 * pi;
-    else if (phi_random > 2 * pi) 
-        return phi_random - 2 * pi;
-
-    return phi_random;
 }
 
 /* Returns random eta uniform in [-1, 1]. */
@@ -95,11 +129,11 @@ Double_t EventModel::GetTrackPt() { return fTrackSpectrum->GetRandom(); }
 ================================================================================*/
 
 
-TF1* EventModel::GetfPolynomial() { return new TF1("fPolynomial", "pol3", 0., 5.); }
+TF1* EventModel::GetfPolynomial() { return new TF1("fPolynomial", "pol3", 0., 6.); }
 
 TF1* EventModel::GetfLine() 
 {
-    TF1* f = new TF1("fLine", "[0] + [1] * x", 5., 18.);
+    TF1* f = new TF1("fLine", "[0] + [1] * x", 6., 18.);
     f->SetParameter(0, 0.15);
     f->SetParameter(1, -0.1 / 10.);
     return f;
@@ -125,4 +159,12 @@ TF1* EventModel::GetfdNdPhi()
     f->SetParName(0, "v2");
     return f;
 }
+
+Float_t EventModel::GetV2(Float_t pt)
+{
+    if (!has_V2) return 0.0;
+    if (pt < 6)  return 3. * (Float_t)fPolynomial->Eval(pt);
+    return 3. * (Float_t)fLine->Eval(pt);
+}
+
 
