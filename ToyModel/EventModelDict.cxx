@@ -38,7 +38,8 @@
 namespace std {} using namespace std;
 
 // Header files passed as explicit arguments
-#include "include/EventModel.h"
+#include "/home/student/jet-radius-analysis/ToyModel/include/EventModel.h"
+#include "/home/student/jet-radius-analysis/ToyModel/include/RootClasses.h"
 
 // Header files passed via #pragma extra_include
 
@@ -56,9 +57,9 @@ namespace ROOT {
       ::EventModel *ptr = 0;
       static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::EventModel >(0);
       static ::ROOT::TGenericClassInfo 
-         instance("EventModel", ::EventModel::Class_Version(), "include/EventModel.h", 21,
+         instance("EventModel", ::EventModel::Class_Version(), "include/EventModel.h", 20,
                   typeid(::EventModel), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &::EventModel::Dictionary, isa_proxy, 17,
+                  &::EventModel::Dictionary, isa_proxy, 16,
                   sizeof(::EventModel) );
       instance.SetNew(&new_EventModel);
       instance.SetNewArray(&newArray_EventModel);
@@ -111,6 +112,37 @@ TClass *EventModel::Class()
    return fgIsA;
 }
 
+//______________________________________________________________________________
+void EventModel::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EventModel.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      TObject::Streamer(R__b);
+      R__b >> has_bkg;
+      R__b >> has_V2;
+      R__b >> fPolynomial;
+      R__b >> fLine;
+      R__b >> fdNdPhi;
+      R__b >> fTrackSpectrum;
+      R__b >> rand;
+      R__b.CheckByteCount(R__s, R__c, EventModel::IsA());
+   } else {
+      R__c = R__b.WriteVersion(EventModel::IsA(), kTRUE);
+      TObject::Streamer(R__b);
+      R__b << has_bkg;
+      R__b << has_V2;
+      R__b << fPolynomial;
+      R__b << fLine;
+      R__b << fdNdPhi;
+      R__b << fTrackSpectrum;
+      R__b << rand;
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
 namespace ROOT {
    // Wrappers around operator new
    static void *new_EventModel(void *p) {
@@ -140,10 +172,10 @@ namespace {
   void TriggerDictionaryInitialization_EventModelDict_Impl() {
     static const char* headers[] = {
 "include/EventModel.h",
+"include/RootClasses.h",
 0
     };
     static const char* includePaths[] = {
-"/home/student/root/include",
 "/home/student/root/include",
 "/home/student/jet-radius-analysis/ToyModel/",
 0
@@ -164,6 +196,7 @@ class __attribute__((annotate("$clingAutoload$include/EventModel.h")))  EventMod
 
 #define _BACKWARD_BACKWARD_WARNING_H
 #include "include/EventModel.h"
+#include "include/RootClasses.h"
 
 #undef  _BACKWARD_BACKWARD_WARNING_H
 )DICTPAYLOAD";

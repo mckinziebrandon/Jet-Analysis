@@ -1,7 +1,6 @@
 #ifndef EVENTMODEL_H
 #define EVENTMODEL_H
 #include "RootClasses.h"
-#include "Rtypes.h"
 #include "TObject.h"
 
 const Int_t trig = 0;
@@ -37,7 +36,8 @@ private:
     Float_t GetV2(Float_t pt);
 public:
     // Constructors / Destructors.
-    EventModel();
+    EventModel() {has_bkg = true; has_V2 = true; };
+    EventModel(Bool_t a, Bool_t b);
     ~EventModel();
     // Setters.
     void SetTrigger(Float_t &pt, Float_t &eta, Float_t &phi);

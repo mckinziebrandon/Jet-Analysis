@@ -1,47 +1,19 @@
 #include "../include/EventModel.h"
+#include "../EventModelDict.cxx"
 
 ClassImp(EventModel)
 
-void EventModel::Streamer(TBuffer &R__b)
-{
-   // Stream an object of class EventModel.
-
-   UInt_t R__s, R__c;
-   if (R__b.IsReading()) {
-      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
-      TObject::Streamer(R__b);
-      R__b >> has_bkg;
-      R__b >> has_V2;
-      R__b >> fPolynomial;
-      R__b >> fLine;
-      R__b >> fdNdPhi;
-      R__b >> fTrackSpectrum;
-      R__b >> rand;
-      R__b.CheckByteCount(R__s, R__c, EventModel::IsA());
-   } else {
-      R__c = R__b.WriteVersion(EventModel::IsA(), kTRUE);
-      TObject::Streamer(R__b);
-      R__b << has_bkg;
-      R__b << has_V2;
-      R__b << fPolynomial;
-      R__b << fLine;
-      R__b << fdNdPhi;
-      R__b << fTrackSpectrum;
-      R__b << rand;
-      R__b.SetByteCount(R__c, kTRUE);
-   }
-}
 
 /************************************
 * Default EventModel Constructor.   *
 * Initializes all instance objects. *
 *************************************/
-EventModel::EventModel(): TObject()
+EventModel::EventModel(Bool_t bkg, Bool_t V2): TObject()
 {
     TNamed("hello","how are you");
     // Initialize event switches.
-    has_bkg = true;
-    has_V2  = true;
+    has_bkg = bkg;
+    has_V2  = V2;
 
     // Initialize instance attribute functions.
     fPolynomial     = (TF1*)GetfPolynomial();

@@ -26,8 +26,7 @@ void ToyModel()
     // Setup EventModel with desired parameters.
     Bool_t bkg_on   = true;
     Bool_t V2_on    = true;
-//    EventModel* event = new EventModel(bkg_on, V2_on);
-    EventModel* event = new EventModel();
+    EventModel* event = new EventModel(bkg_on, V2_on);
 
     TFile* f_out = new TFile("./rootFiles/ToyModel.root", "RECREATE");
 
@@ -91,6 +90,7 @@ void ToyModel()
     t_trig->Write("", TObject::kOverwrite);
     t_assoc->Write("", TObject::kOverwrite);
     t_bkg->Write("", TObject::kOverwrite);
+    event->Write();
 
     /*
     // Create list of generic histogram identifiers for plotting.
