@@ -21,35 +21,13 @@ void ToyModel()
      * Object Declarations.                                         *
      * ------------------------------------------------------------ */
 
-    Float_t eta, phi, pt;
-
     // Setup EventModel with desired parameters.
     Bool_t bkg_on   = true;
     Bool_t V2_on    = true;
-    EventModel* event = new EventModel(bkg_on, V2_on);
-
-    TFile* f_out = new TFile("./rootFiles/ToyModel.root", "RECREATE");
+    EventModel* event = new EventModel();
 
     // Create file for object output tests.
     std::ofstream f_debug("./debug/debug_ToyModel.txt");
-
-    // Phase space: trigger.
-    TTree* t_trig = new TTree("t_trig", "Trigger attributes");
-    t_trig->Branch("eta", &eta);
-    t_trig->Branch("phi", &phi);
-    t_trig->Branch("pt", &pt);
-
-    // Phase space: associated.
-    TTree* t_assoc = new TTree("t_assoc", "Associated attributes");
-    t_assoc->Branch("eta", &eta);
-    t_assoc->Branch("phi", &phi);
-    t_assoc->Branch("pt", &pt);
-
-    // Phase space: background.
-    TTree* t_bkg = new TTree("t_bkg", "Background attributes");
-    t_bkg->Branch("eta", &eta);
-    t_bkg->Branch("phi", &phi);
-    t_bkg->Branch("pt", &pt);
 
     /* ---------------------------------------------------- *
      * Data Generation/Simulation.                          *       
@@ -64,33 +42,23 @@ void ToyModel()
             cout << " ." << flush;
 
         // Generate trigger eta, pt, and v2(pt).
-        event->SetTrigger(pt, eta, phi);
-        t_trig->Fill();
+        event->GenerateTrigger();
 
         // Generate associated eta, phi pt.
-        event->SetJet(pt, eta, phi);
-        t_assoc->Fill();
-
+        event->GenerateJet();
 
         // Generate background eta, phi pt.
         #pragma omp parallel for
         for (Int_t i_bkg = 0; i_bkg < nBkg; i_bkg++)
-        {
-            event->SetBackground(pt, eta, phi);
-            t_bkg->Fill();
-        }
+            event->GenerateBackground();
     }
+
+    event->Write();
     
 
     /* ------------------------------------------------------------ *
      * Drawing and Saving.                                          *
      * ------------------------------------------------------------ */
-
-    f_out->cd();
-    t_trig->Write("", TObject::kOverwrite);
-    t_assoc->Write("", TObject::kOverwrite);
-    t_bkg->Write("", TObject::kOverwrite);
-    event->Write();
 
     /*
     // Create list of generic histogram identifiers for plotting.
@@ -111,12 +79,6 @@ void ToyModel()
     c_bkg->Write();
     c_bkg->Close();
     */
-
-
-    delete t_trig;
-    delete t_assoc;
-    delete t_bkg;
-    delete f_out;
 }
 
 #ifndef __CINT__

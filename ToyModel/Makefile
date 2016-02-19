@@ -22,7 +22,7 @@ LINK=LinkDef.h
 $(DICT): 
 	rootcint -f $(DICT) -c $(DEPS) $(LINK)
 
-ToyModel: $(DICT) $(OBJ1) 
+ToyModel: $(OBJ1) 
 	$(CXX) -o $@ $(OBJ1) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
 
 PlotModel: $(OBJ2)

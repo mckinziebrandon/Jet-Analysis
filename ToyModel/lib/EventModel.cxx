@@ -1,25 +1,22 @@
 #include "../include/EventModel.h"
-#include "../EventModelDict.cxx"
-
-ClassImp(EventModel)
 
 
 /************************************
 * Default EventModel Constructor.   *
 * Initializes all instance objects. *
 *************************************/
-EventModel::EventModel(Bool_t bkg, Bool_t V2): TObject()
-{
-    TNamed("hello","how are you");
-    // Initialize event switches.
-    has_bkg = bkg;
-    has_V2  = V2;
+EventModel::EventModel()
+{    
+    t_trig  = (TTree*)InitializeTrigger();
+    t_assoc = (TTree*)InitializeJet();
+    t_bkg   = (TTree*)InitializeBackground();
 
-    // Initialize instance attribute functions.
-    fPolynomial     = (TF1*)GetfPolynomial();
-    fLine           = (TF1*)GetfLine();
-    fTrackSpectrum  = (TF1*)GetfSpectrum();
-    fdNdPhi         = (TF1*)GetfdNdPhi();
+    // Initialize event switches.
+    has_bkg = true;
+    has_V2  = true;
+
+    // Initialize all functions.
+    functions = new EventFunctions();
 
     // Fit ALICE data and store in fPolynomial and fLine.
     TFile* file_v2 = new TFile("./rootFiles/ALICE_v2pt.root");
@@ -39,36 +36,66 @@ EventModel::EventModel(Bool_t bkg, Bool_t V2): TObject()
 *************************************/
 EventModel::~EventModel() 
 {
-    delete fPolynomial;
-    delete fLine;
-    delete fdNdPhi;
-    delete fTrackSpectrum;
+    delete functions;
     delete rand;
+    delete t_trig;
+    delete t_assoc;
+    delete t_bkg;
+}
+
+void EventModel::Write()
+{
+    TFile* topFile = new TFile("./rootFiles/ToyModel.root", "RECREATE");
+
+    //_____________ Store all trees. _____________
+    TDirectory* treeDir = topFile->mkdir("trees");
+    treeDir->cd();
+    treeDir->Add(t_trig, true);
+    treeDir->Add(t_assoc, true);
+    treeDir->Add(t_bkg, true);
+
+    //_____________ Store all functions. _____________
+    TDirectory* functionDir = topFile->mkdir("functions");
+    functionDir->cd();
+    // Todo.
+    functionDir->Add(fPolynomial, true);
+    functionDir->Add(fLine, true);
+    functionDir->Add(fTrackSpectrum, true);
+    functionDir->Add(fdNdPhi, true);
+
+    topFile->Write();
+    delete topFile;
 }
 
 // uno
-void EventModel::SetTrigger(Float_t &pt, Float_t &eta, Float_t &phi)
+void EventModel::GenerateTrigger()
 {
+    // Todo.
     pt  = GetTrackPt();
     eta = GetRandEta();
     phi = GetTriggerPhi(pt); 
+    t_trig->Fill();
 }
 
 // dos
-void EventModel::SetJet(Float_t &pt, Float_t &eta, Float_t &phi)
+void EventModel::GenerateJet()
 {
+    // Todo.
     Float_t trigger_phi = phi;
     eta = -eta;
     pt  = GetTrackPt();
     phi = GetAssocPhi(pt, trigger_phi, sigma_dphi);
+    t_assoc->Fill();
 }
 
 // tres
-void EventModel::SetBackground(Float_t &pt, Float_t &eta, Float_t &phi)
+void EventModel::GenerateBackground()
 {
+    // Todo.
     pt  = GetTrackPt();
     phi = GetTriggerPhi(pt);
     eta = GetRandEta();
+    t_bkg->Fill();
 }
 
 /****************************************************
@@ -77,6 +104,7 @@ void EventModel::SetBackground(Float_t &pt, Float_t &eta, Float_t &phi)
 *****************************************************/
 Float_t EventModel::GetTriggerPhi(Float_t pt) 
 {
+    // Todo.
     fdNdPhi->SetParameter("v2", GetV2(pt));
     return fdNdPhi->GetRandom();
 }
@@ -130,38 +158,6 @@ Double_t EventModel::GetTrackPt() { return fTrackSpectrum->GetRandom(); }
 ---------------------------------------------------------------------------------
 ================================================================================*/
 
-
-TF1* EventModel::GetfPolynomial() { return new TF1("fPolynomial", "pol3", 0., 6.); }
-
-TF1* EventModel::GetfLine() 
-{
-    TF1* f = new TF1("fLine", "[0] + [1] * x", 6., 18.);
-    f->SetParameter(0, 0.15);
-    f->SetParameter(1, -0.1 / 10.);
-    return f;
-}
-
-TF1* EventModel::GetfSpectrum () 
-{
-    TString funcString = "[0] * (TMath::Power([1], 2) * x * TMath::Exp(-[1]*x))";
-    funcString += " + (x>1) * [2]";
-    funcString += " * (1.17676e-01 * TMath::Sqrt(0.1396*0.1396+x*x)";
-    funcString += " * TMath::Power(1. + 1./ [3] / 8.21795e-01";
-    funcString += " * TMath::Sqrt(0.1396*0.1396+x*x), -1. * [3]))";
-    funcString += " * (1 / ( 1 + TMath::Exp( -(x - [4]) / [5] )))";
-    TF1* f = new TF1("fspectrum", funcString.Data(), .2, 200.);
-    f->SetParameters(2434401791.20528, 2.98507, 10069622.25117, 5.50000, 2.80000, 0.20000);
-    return f;
-}
-
-TF1* EventModel::GetfdNdPhi() 
-{
-    TF1* f= new TF1("fdNdPhi", "1 + 2 * [0] * TMath::Cos(2. * x)", 0., 2. * pi);
-    f->SetParameter(0, 0.);
-    f->SetParName(0, "v2");
-    return f;
-}
-
 Float_t EventModel::GetV2(Float_t pt)
 {
     if (!has_V2) return 0.0;
@@ -169,4 +165,30 @@ Float_t EventModel::GetV2(Float_t pt)
     return 3. * (Float_t)fLine->Eval(pt);
 }
 
+TTree* EventModel::InitializeTrigger()
+{
+    TTree* tt = new TTree("tt", "Trigger attributes");
+    tt->Branch("eta", &eta);
+    tt->Branch("phi", &phi);
+    tt->Branch("pt", &pt);
+    return tt;
+}
+
+TTree* EventModel::InitializeJet()
+{
+    TTree* ta = new TTree("ta", "Associated attributes");
+    ta->Branch("eta", &eta);
+    ta->Branch("phi", &phi);
+    ta->Branch("pt", &pt);
+    return ta;
+}
+
+TTree* EventModel::InitializeBackground()
+{
+    TTree* tb = new TTree("tb", "Background attributes");
+    tb->Branch("eta", &eta);
+    tb->Branch("phi", &phi);
+    tb->Branch("pt", &pt);
+    return tb;
+}
 
