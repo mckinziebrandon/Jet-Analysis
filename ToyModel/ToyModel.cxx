@@ -26,7 +26,8 @@ void ToyModel()
     // Setup EventModel with desired parameters.
     Bool_t bkg_on   = true;
     Bool_t V2_on    = true;
-    EventModel* event = new EventModel(bkg_on, V2_on);
+//    EventModel* event = new EventModel(bkg_on, V2_on);
+    EventModel* event = new EventModel();
 
     TFile* f_out = new TFile("./rootFiles/ToyModel.root", "RECREATE");
 

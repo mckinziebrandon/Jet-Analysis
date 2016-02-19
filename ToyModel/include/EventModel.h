@@ -2,6 +2,7 @@
 #define EVENTMODEL_H
 #include "RootClasses.h"
 #include "Rtypes.h"
+#include "TObject.h"
 
 const Int_t trig = 0;
 const Int_t assoc = 1;
@@ -17,8 +18,7 @@ const Int_t parton_mass         = 0;
 const Float_t sigma_dphi        = (pi / 4) / 2;
 // -------------------------------
 
-class EventModel: public TNamed
-{
+class EventModel: public TObject {
 private:
     // Event switches.
     Bool_t has_bkg;
@@ -37,7 +37,7 @@ private:
     Float_t GetV2(Float_t pt);
 public:
     // Constructors / Destructors.
-    EventModel(Bool_t bkg=true, Bool_t V2=true);
+    EventModel();
     ~EventModel();
     // Setters.
     void SetTrigger(Float_t &pt, Float_t &eta, Float_t &phi);
@@ -51,7 +51,7 @@ public:
     // Miscellaneous. 
     Float_t dphi(Float_t p, Float_t p2); 
 
-    ClassDef(EventModel, 6)
+    ClassDef(EventModel, 6);
 };
 
 #endif
