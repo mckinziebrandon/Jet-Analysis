@@ -3,13 +3,15 @@
 #include "RootClasses.h"
 #include "EventFunctions.h"
 
-const Int_t trig = 0;
-const Int_t assoc = 1;
-const Int_t bkg = 2;
+// --- Identifiers ---
+const Int_t trig    = 0;
+const Int_t assoc   = 1;
+const Int_t bkg     = 2;
+// -------------------
 
 // ---------- Constants ----------
 const Float_t pi    = TMath::Pi();
-const Int_t nEvents             = 200;
+const Int_t nEvents             = 10000;
 const Int_t nBkg                = 10;
 const Int_t nCanvas             = 3;
 const Int_t trig_pt_threshold   = 1;
@@ -28,8 +30,9 @@ private:
     TTree* t_trig;
     TTree* t_assoc;
     TTree* t_bkg;
-    EventFunctions* functions;
     TRandom3* rand;
+    // User-defined EventFunctions.
+    EventFunctions* functions;
     // Private helper methods.
     Float_t GetV2(Float_t pt);
     TTree* InitializeBackground();

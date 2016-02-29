@@ -9,9 +9,10 @@ ROOTLIBS 	= `root-config --libs`
 ROOTGLIBS   = `root-config --glibs`
 ROOTCLING 	= `rootcling`
 
-DEPS= $(INCLUDE)/EventModel.h $(INCLUDE)/RootClasses.h 
-OBJ1= ToyModel.so $(LIB)/EventModel.so $(LIB)/RootClasses.so 
-OBJ2= PlotModel.so $(LIB)/EventModel.so $(LIB)/RootClasses.so 
+DEPS= $(INCLUDE)/EventModel.h $(INCLUDE)/RootClasses.h  $(INCLUDE)/EventFunctions.h
+OBJ1= ToyModel.so $(LIB)/EventModel.so $(LIB)/RootClasses.so $(LIB)/EventFunctions.so
+OBJ2= PlotModel.so $(LIB)/EventModel.so $(LIB)/RootClasses.so $(LIB)/EventFunctions.so
+
 
 DICT=EventModelDict.cxx
 LINK=LinkDef.h
@@ -27,7 +28,7 @@ ToyModel: $(OBJ1)
 
 PlotModel: $(OBJ2)
 	echo "Beginning compilation . . . "
-	$(CXX) -o $@ $^ $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
+	$(CXX) -o $@ $(OBJ2) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
 	echo "Running program . . . "
 	./PlotModel
 	echo "Opening ROOT . . . "

@@ -1,3 +1,4 @@
+#include "../include/EventModel.h"
 #include "../include/EventFunctions.h"
 
 EventFunctions::EventFunctions()
@@ -17,17 +18,16 @@ EventFunctions::~EventFunctions()
 }
 
 // Getters. -----------------------------------------------------
-TF1* EventModel::GetfPolynomial()       { return fPolynomial; }
-TF1* EventModel::GetfLine()             { return fLine; }
-TF1* EventModel::GetfTrackSpectrum()    { return fTrackSpectrum; }
-TF1* EventModel::GetfdNdPhi()           { return fdNdPhi; }
+TF1* EventFunctions::GetfPolynomial()       { return fPolynomial; }
+TF1* EventFunctions::GetfLine()             { return fLine; }
+TF1* EventFunctions::GetfTrackSpectrum()    { return fTrackSpectrum; }
+TF1* EventFunctions::GetfdNdPhi()           { return fdNdPhi; }
 //---------------------------------------------------------------
 
-
 // -------------------------------------------------------------------------------------
-TF1* EventModel::InitfPolynomial() { return new TF1("fPolynomial", "pol3", 0., 6.); }
+TF1* EventFunctions::InitfPolynomial() { return new TF1("fPolynomial", "pol3", 0., 6.); }
 
-TF1* EventModel::InitfLine() 
+TF1* EventFunctions::InitfLine() 
 {
     TF1* f = new TF1("fLine", "[0] + [1] * x", 6., 18.);
     f->SetParameter(0, 0.15);
@@ -35,7 +35,7 @@ TF1* EventModel::InitfLine()
     return f;
 }
 
-TF1* EventModel::InitfSpectrum () 
+TF1* EventFunctions::InitfTrackSpectrum () 
 {
     TString funcString = "[0] * (TMath::Power([1], 2) * x * TMath::Exp(-[1]*x))";
     funcString += " + (x>1) * [2]";
@@ -48,11 +48,12 @@ TF1* EventModel::InitfSpectrum ()
     return f;
 }
 
-TF1* EventModel::InitfdNdPhi() 
+TF1* EventFunctions::InitfdNdPhi() 
 {
     TF1* f= new TF1("fdNdPhi", "1 + 2 * [0] * TMath::Cos(2. * x)", 0., 2. * pi);
     f->SetParameter(0, 0.);
     f->SetParName(0, "v2");
     return f;
 }
+// -------------------------------------------------------------------------------------
 

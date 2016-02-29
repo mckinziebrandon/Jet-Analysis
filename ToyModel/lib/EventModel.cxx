@@ -1,5 +1,5 @@
 #include "../include/EventModel.h"
-
+#include "../include/EventFunctions.h"
 
 /************************************
 * Default EventModel Constructor.   *
@@ -21,8 +21,8 @@ EventModel::EventModel()
     // Fit ALICE data and store in fPolynomial and fLine.
     TFile* file_v2 = new TFile("./rootFiles/ALICE_v2pt.root");
     TGraph* g = (TGraphAsymmErrors*)file_v2->Get("v2Plot_2;1");
-    g->Fit(fPolynomial, "RQ");
-    g->Fit(fPolynomial, "RQ+");
+    g->Fit(functions->GetfPolynomial(), "RQ");
+    g->Fit(functions->GetfPolynomial(), "RQ+");
     delete g;
     delete file_v2;
 
@@ -58,10 +58,10 @@ void EventModel::Write()
     TDirectory* functionDir = topFile->mkdir("functions");
     functionDir->cd();
     // Todo.
-    functionDir->Add(fPolynomial, true);
-    functionDir->Add(fLine, true);
-    functionDir->Add(fTrackSpectrum, true);
-    functionDir->Add(fdNdPhi, true);
+    functionDir->Add(functions->GetfPolynomial(), true);
+    functionDir->Add(functions->GetfLine(), true);
+    functionDir->Add(functions->GetfTrackSpectrum(), true);
+    functionDir->Add(functions->GetfdNdPhi(), true);
 
     topFile->Write();
     delete topFile;
@@ -105,8 +105,8 @@ void EventModel::GenerateBackground()
 Float_t EventModel::GetTriggerPhi(Float_t pt) 
 {
     // Todo.
-    fdNdPhi->SetParameter("v2", GetV2(pt));
-    return fdNdPhi->GetRandom();
+    functions->GetfdNdPhi()->SetParameter("v2", GetV2(pt));
+    return functions->GetfdNdPhi()->GetRandom();
 }
 
 
@@ -149,7 +149,7 @@ Float_t EventModel::dphi(Float_t phi1, Float_t phi2)
 Float_t EventModel::GetRandEta() { return rand->Uniform(-1.00, 1.00); }
 
 /* Returns random pt from boltzmann probability distribution. */
-Double_t EventModel::GetTrackPt() { return fTrackSpectrum->GetRandom(); }
+Double_t EventModel::GetTrackPt() { return functions->GetfTrackSpectrum()->GetRandom(); }
 
 
 /*===============================================================================
@@ -161,8 +161,8 @@ Double_t EventModel::GetTrackPt() { return fTrackSpectrum->GetRandom(); }
 Float_t EventModel::GetV2(Float_t pt)
 {
     if (!has_V2) return 0.0;
-    if (pt < 6)  return 3. * (Float_t)fPolynomial->Eval(pt);
-    return 3. * (Float_t)fLine->Eval(pt);
+    if (pt < 6)  return 3. * (Float_t)functions->GetfPolynomial()->Eval(pt);
+    return 3. * (Float_t)functions->GetfLine()->Eval(pt);
 }
 
 TTree* EventModel::InitializeTrigger()

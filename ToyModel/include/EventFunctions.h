@@ -13,7 +13,7 @@ private:
     TF1* InitfPolynomial();
     TF1* InitfLine();
     TF1* InitfdNdPhi();
-    TF1* InitfSpectrum();
+    TF1* InitfTrackSpectrum();
 public:
     // Constructors / Destructors.
     EventFunctions();
@@ -21,7 +21,7 @@ public:
     TF1* GetfPolynomial();
     TF1* GetfLine();
     TF1* GetfdNdPhi();
-    TF1* GetfSpectrum();
+    TF1* GetfTrackSpectrum();
 };
 #endif
 

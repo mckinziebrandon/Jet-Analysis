@@ -1,0 +1,2 @@
+rm AliAnalysisTaskHJetSpectraM_cxx.d
+rm AliAnalysisTaskHJetSpectraM_cxx.so
