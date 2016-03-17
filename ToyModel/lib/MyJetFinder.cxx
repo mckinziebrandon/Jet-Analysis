@@ -53,8 +53,8 @@ const Int_t MyJetFinder::GetNumEmbed() {
  * Depending on STR, generates a type of particle and places it in the parcticles
  * std::vector for analysis in fastjet.
  */
-void MyJetFinder::Generate(const string& str) {
-    EventModel::Generate(str);
+void MyJetFinder::GenerateParticle() {
+    EventModel::GenerateParticle();
     TLorentzVector v_temp;
     v_temp.SetPtEtaPhiM(pt, eta, phi, 0.0);
     PseudoJet jet_temp(v_temp.Px(), v_temp.Py(), v_temp.Pz(), v_temp.E());
@@ -82,14 +82,6 @@ void MyJetFinder::FindJetsInEvent() {
     for (Int_t i = 0; i < eventJetsVector.size(); i++) {
     	t_ptJetReco->Fill(eventJetsVector[i].pt());
     }
-}
-
-/*
- * Fills hNumJets with number of jetsVector found in this event.
- * TODO Make this actually work . . .
- */
-void MyJetFinder::FillEventHistograms() {
-    ResetEventVariables(); // Careful about moving this...
 }
 
 Int_t MyJetFinder::GetNumJetsInEvent() {

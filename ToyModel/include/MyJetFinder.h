@@ -16,13 +16,12 @@ class MyJetFinder: public EventModel {
 public:
     MyJetFinder();
     ~MyJetFinder();
-    void Generate(const string& str);
     void FindJets();
+    void GenerateParticle();
     void FindJetsInEvent();
     void PrintJetsInEvent();
     void EmbedJetsInEvent();
     const Int_t GetNumEmbed();
-    void FillEventHistograms();
     void Write(TString fileName);
 	Int_t GetNumJetsInEvent();
     Double_t GetTrackPt();

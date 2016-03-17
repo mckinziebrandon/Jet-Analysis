@@ -44,7 +44,7 @@ void ToyModel(Int_t nEvents = 1000) {
     // Simulate nEvents with randomly generated tracks. 
     for (Int_t i_event = 0; i_event < nEvents; i_event++) {
     	// Print progress updates.
-    	debugStr = "";
+    	debugStr = "\n";
     	debugStr += (Float_t)(i_event * 100)/nEvents;
     	debugStr += " Percent Complete.";
     	print(debugStr.Data(), i_event, nEvents);
@@ -56,24 +56,13 @@ void ToyModel(Int_t nEvents = 1000) {
     	}
     	// --------------------------------
 
-    	// -------------- OLD -------------
-        // Generate trigger eta, pt, and v2(pt).
-        jetFinder->Generate("trig");
-        // Generate associated eta, phi pt.
-        jetFinder->Generate("jet");
-
-        // Generate background eta, phi pt.
-        #pragma omp parallel for
-        for (Int_t i_bkg = 0; i_bkg < nBkg; i_bkg++) {
-            jetFinder->Generate("bkg");
-        }
-
         // Place arbitrary high pt objects into this event.
         debugStr  = "Embedding ";
         debugStr += jetFinder->GetNumEmbed();
         debugStr += " 100 GeV objects into event number ";
         debugStr += i_event;
         print(debugStr.Data(), i_event, nEvents);
+        // TODO: embedding technically takes place in GenerateParticle() now.
         jetFinder->EmbedJetsInEvent();
 
         // Use ClusterSequence to get store list of jets in this event.

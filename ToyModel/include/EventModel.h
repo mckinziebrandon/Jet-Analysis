@@ -12,14 +12,13 @@ const Int_t bkg     = 2;
 
 // ---------- Constants ----------
 const Float_t pi    = TMath::Pi();
-//const Int_t nEvents             = 10000;
 const Int_t nBkg                = 100;
 const Int_t nCanvas             = 3;
 const Int_t trig_pt_threshold   = 1;
 const Int_t parton_mass         = 0;
 const Float_t sigma_dphi        = (pi / 4) / 2;
-// -------------------------------
 const Float_t triggerThreshold = 5.0;
+// -------------------------------
 
 class EventModel 
 {
@@ -28,7 +27,6 @@ public:
     EventModel();
     ~EventModel();
     // Setters.
-    void Generate(const string& str); // @deprecated
     void GenerateParticle();
     void NewEvent();
     // Getters.
@@ -42,9 +40,6 @@ public:
 protected:
 	Bool_t haveTrigger = false; // flag per-event if found trigger particle yet.
     Float_t eta, phi, pt;
-    // Event switches.
-    Bool_t has_bkg;
-    Bool_t has_V2;
     // Instance objects.
     TTree* t_trig;
     TTree* t_assoc;

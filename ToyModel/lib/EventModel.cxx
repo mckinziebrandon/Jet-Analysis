@@ -11,10 +11,6 @@ EventModel::EventModel()
     t_assoc = (TTree*)InitializeJet();
     t_bkg   = (TTree*)InitializeBackground();
 
-    // Initialize event switches.
-    has_bkg = true;
-    has_V2  = true;
-
     // Initialize all functions.
     functions = new EventFunctions();
 
@@ -77,26 +73,6 @@ void EventModel::Write(TString fileName)
     delete topFile;
 }
 
-// @deprecated
-void EventModel::Generate(const string& str) {
-    pt  = GetTrackPt();
-    if (str.compare("trig") == 0 || str.compare("bkg") == 0) {
-        eta = GetRandEta();
-        phi = GetTriggerPhi(pt);
-        if (str.compare("trig") == 0) {
-            t_trig->Fill();
-            return;
-        }
-        t_bkg->Fill();
-        return;
-    } else if (str.compare("jet") == 0) {
-        Float_t trigger_phi = phi;
-        eta = -eta;
-        phi = GetAssocPhi(pt, trigger_phi, sigma_dphi);
-        t_assoc->Fill();
-    }
-}
-
 /*
  * Replacement for Generate().
  * Now it gets a random particle and figures out if it satisfies the conditions
@@ -152,14 +128,7 @@ Float_t EventModel::GetAssocPhi(Float_t pt, Float_t trig_phi, Float_t sigma_dphi
     if (assoc_phi_mean > 2 * pi) 
         assoc_phi_mean -= 2 * pi;
 
-    // Create superposition of gaussian and modulation in phi.
-    TF1* f_v2_gaus = new TF1("f_v2_gaus", "gaus(0)+1+2*[3]*TMath::Cos(2.*x)", 0, 2*pi);
-    f_v2_gaus->SetParameters(1, assoc_phi_mean, sigma_dphi, 2.0 * GetV2(pt));
-
-    // Store random value of modulated function and clean up. 
-    result = f_v2_gaus->GetRandom();
-    delete f_v2_gaus;
-    return result;
+    return (Float_t) rand->Gaus(assoc_phi_mean, sigma_dphi);
 }
 
 /****************************************************
@@ -188,7 +157,6 @@ Double_t EventModel::GetTrackPt() { return functions->GetfTrackSpectrum()->GetRa
 
 Float_t EventModel::GetV2(Float_t pt)
 {
-    if (!has_V2) return 0.0;
     if (pt < 6)  return (Float_t)functions->GetfPolynomial()->Eval(pt);
     return (Float_t)functions->GetfLine()->Eval(pt);
 }
