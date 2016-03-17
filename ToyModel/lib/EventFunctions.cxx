@@ -25,10 +25,11 @@ TF1* EventFunctions::GetfdNdPhi()           { return fdNdPhi; }
 //---------------------------------------------------------------
 
 // -------------------------------------------------------------------------------------
-TF1* EventFunctions::InitfPolynomial() { return new TF1("fPolynomial", "pol3", 0., 6.); }
+TF1* EventFunctions::InitfPolynomial() {
+	return new TF1("fPolynomial", "pol3", 0., 6.);
+}
 
-TF1* EventFunctions::InitfLine() 
-{
+TF1* EventFunctions::InitfLine() {
     TF1* f = new TF1("fLine", "[0] + [1] * x", 6., 18.);
     f->SetParameter(0, 0.15);
     f->SetParameter(1, -0.1 / 10.);
@@ -56,4 +57,3 @@ TF1* EventFunctions::InitfdNdPhi()
     return f;
 }
 // -------------------------------------------------------------------------------------
-

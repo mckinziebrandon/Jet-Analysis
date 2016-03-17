@@ -10,81 +10,112 @@
 #include <fstream>
 #include "./include/RootClasses.h"
 #include "./include/EventModel.h"
+#include "./include/MyJetFinder.h"
 
+/* Print function that outputs if debug flag = true. */
+Bool_t debug = false;
+TString debugStr;
+void print(const char* str, Int_t i_event, Int_t nEvents) {
+	Bool_t fivePercentInterval = (i_event % (nEvents / 20) == 0);
+	if (debug && fivePercentInterval) {
+		cout << str << endl;
+	}
+}
 
 // --------------------------------------------------------------------------------------------
-void ToyModel()
-{
+void ToyModel(Int_t nEvents = 1000) {
     using std::cout;
     using std::flush;
-    /* ------------------------------------------------------------ *
-     * Object Declarations.                                         *
-     * ------------------------------------------------------------ */
 
-    // Setup EventModel with desired parameters.
-    Bool_t bkg_on   = true;
-    Bool_t V2_on    = true;
-    EventModel* event = new EventModel();
+    /* ------------------------------------------------ *
+     * Object Declarations.            					*
+     * ------------------------------------------------ */
 
+    // Setup jetFinder.
+    MyJetFinder* jetFinder = new MyJetFinder();
     // Create file for object output tests.
     std::ofstream f_debug("./debug/debug_ToyModel.txt");
 
-    /* ---------------------------------------------------- *
-     * Data Generation/Simulation.                          *       
-     * ---------------------------------------------------- */
+    /* ------------------------------------------------ *
+     * Data Generation/Simulation.                   	*
+     * ------------------------------------------------ */
 
+    cout << "Beginning ToyModel simulation of " << nEvents << " events." << endl;
     // Simulate nEvents with randomly generated tracks. 
-    for (Int_t i_event = 0; i_event < nEvents; i_event++)
-    {
-        if (i_event % (nEvents / 20) == 0)
-            cout << "\n" << (Float_t)(i_event * 100)/nEvents << " Percent Complete." << flush;
-        else if (i_event % (nEvents / 200) == 0)
-            cout << " ." << flush;
+    for (Int_t i_event = 0; i_event < nEvents; i_event++) {
+    	// Print progress updates.
+    	debugStr = "";
+    	debugStr += (Float_t)(i_event * 100)/nEvents;
+    	debugStr += " Percent Complete.";
+    	print(debugStr.Data(), i_event, nEvents);
 
+    	// -------------- NEW -------------
+    	jetFinder->NewEvent();
+    	for (Int_t i = 0; i < nBkg; i++) {
+    		jetFinder->GenerateParticle();
+    	}
+    	// --------------------------------
+
+    	// -------------- OLD -------------
         // Generate trigger eta, pt, and v2(pt).
-        event->GenerateTrigger();
-
+        jetFinder->Generate("trig");
         // Generate associated eta, phi pt.
-        event->GenerateJet();
+        jetFinder->Generate("jet");
 
         // Generate background eta, phi pt.
         #pragma omp parallel for
-        for (Int_t i_bkg = 0; i_bkg < nBkg; i_bkg++)
-            event->GenerateBackground();
+        for (Int_t i_bkg = 0; i_bkg < nBkg; i_bkg++) {
+            jetFinder->Generate("bkg");
+        }
+
+        // Place arbitrary high pt objects into this event.
+        debugStr  = "Embedding ";
+        debugStr += jetFinder->GetNumEmbed();
+        debugStr += " 100 GeV objects into event number ";
+        debugStr += i_event;
+        print(debugStr.Data(), i_event, nEvents);
+        jetFinder->EmbedJetsInEvent();
+
+        // Use ClusterSequence to get store list of jets in this event.
+        jetFinder->FindJetsInEvent();
+        debugStr  = "Found ";
+        debugStr += jetFinder->GetNumJetsInEvent();
+        debugStr += " jets in this event.";
+        print(debugStr.Data(), i_event, nEvents);
+//        jetFinder->PrintJetsInEvent();
+
+        // For now, just fills hNumJets.
+        jetFinder->ResetEventVariables();
     }
 
-    event->Write();
-    
+    /* ------------------------------------------------ *
+     * Save Simulation Data.							*
+     * ------------------------------------------------ */
 
-    /* ------------------------------------------------------------ *
-     * Drawing and Saving.                                          *
-     * ------------------------------------------------------------ */
-
-    /*
-    // Create list of generic histogram identifiers for plotting.
-    TString histNames[] = {"phi", "eta", "pt", "eta:phi"};
-
-    // Draw [3] [trigger] histograms from data in [t_trig].
-    TCanvas* c_trigger = (TCanvas*)DrawHists(4, TString("trigger"), histNames, t_trig);
-    c_trigger->Write();
-    c_trigger->Close();
-
-    // Draw [3] [associated] histograms from data in [t_assoc].
-    TCanvas* c_associated = (TCanvas*)DrawHists(4, TString("associated"), histNames, t_assoc);
-    c_associated->Write();
-    c_associated->Close();
-
-    // Draw [3] [background] histograms from data in [t_bkg].
-    TCanvas* c_bkg = (TCanvas*)DrawHists(4, TString("background"), histNames, t_bkg);
-    c_bkg->Write();
-    c_bkg->Close();
-    */
+    // Create new ROOT file with generic EventModel objects, and
+    // store desired jet histograms in subfolder "jetPlots".
+    TString fileName = "./rootFiles/ToyModel_";
+    fileName += nEvents;
+    fileName += ".root";
+    jetFinder->Write(fileName);
 }
 
+/*
+ * This main function is needed to compile via "make."
+ * Runs ToyModel over argv[1] number of events, if specified,
+ * else runs for 1000 events.
+ */
 #ifndef __CINT__
-int main() 
-{
-    ToyModel();
+int main(int argc, char* argv[]) {
+    if (argc == 2) {
+        ToyModel(atoi(argv[1]));
+    } else if (argc == 3 && strcmp(argv[2], "debug") == 0){
+    	debug = true;
+        ToyModel(atoi(argv[1]));
+    } else {
+        ToyModel();
+    }
     return 0;
 }
 #endif
+

@@ -19,6 +19,7 @@ using namespace std;
 #include "THStack.h"
 #include "TLatex.h"
 #include "TLegend.h"
+#include "TLorentzVector.h"
 #include "TMath.h"
 #include "TNtuple.h"
 #include "TPad.h"

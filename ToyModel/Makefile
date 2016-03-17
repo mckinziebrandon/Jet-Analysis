@@ -8,31 +8,34 @@ ROOTCFLAGS 	=`root-config --cflags`
 ROOTLIBS 	= `root-config --libs`
 ROOTGLIBS   = `root-config --glibs`
 ROOTCLING 	= `rootcling`
+FJETFLAGS 	= `fastjet-config --cxxflags --libs --plugins`
 
-DEPS= $(INCLUDE)/EventModel.h $(INCLUDE)/RootClasses.h  $(INCLUDE)/EventFunctions.h
-OBJ1= ToyModel.so $(LIB)/EventModel.so $(LIB)/RootClasses.so $(LIB)/EventFunctions.so
-OBJ2= PlotModel.so $(LIB)/EventModel.so $(LIB)/RootClasses.so $(LIB)/EventFunctions.so
+DEPS= $(INCLUDE)/EventModel.h $(INCLUDE)/RootClasses.h  $(INCLUDE)/EventFunctions.h $(INCLUDE)/MyJetFinder.h
+LIBFILES= $(LIB)/EventModel.so $(LIB)/RootClasses.so $(LIB)/EventFunctions.so $(LIB)/MyJetFinder.so
+
+OBJ1= ToyModel.so $(LIBFILES)
+OBJ2= PlotModel.so $(LIBFILES)
 
 
 DICT=EventModelDict.cxx
 LINK=LinkDef.h
 
 %.so: %.cxx $(DEPS)
-	$(CXX) -c -o $@ $< $(ROOTCFLAGS) $(ROOTLIBS)
+	$(CXX) -c -o $@ $< $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS)
 
 $(DICT): 
 	rootcint -f $(DICT) -c $(DEPS) $(LINK)
 
 ToyModel: $(OBJ1) 
-	$(CXX) -o $@ $(OBJ1) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
+	echo "Beginning compilation of $@ . . . "
+	$(CXX) -o $@ $(OBJ1) $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
 
 PlotModel: $(OBJ2)
-	echo "Beginning compilation . . . "
-	$(CXX) -o $@ $(OBJ2) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
-	echo "Running program . . . "
-	./PlotModel
-	echo "Opening ROOT . . . "
-	root -l -L ./rootFiles/PlotModel.root
+	echo "Beginning compilation of $@ . . . "
+	$(CXX) -o $@ $(OBJ2) $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
+
+FileWithFastJet:
+	 g++ short-example.cc -o short-example `fastjet-config --cxxflags --libs --plugins`
 
 clean:
 	rm *.pcm *.so *Dict* $(LIB)/*.so

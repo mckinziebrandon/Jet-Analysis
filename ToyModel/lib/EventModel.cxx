@@ -19,12 +19,22 @@ EventModel::EventModel()
     functions = new EventFunctions();
 
     // Fit ALICE data and store in fPolynomial and fLine.
-    TFile* file_v2 = new TFile("./rootFiles/ALICE_v2pt.root");
-    TGraph* g = (TGraphAsymmErrors*)file_v2->Get("v2Plot_2;1");
+    TFile* file_v2 = new TFile("/home/student/jet-radius-analysis/ToyModel/rootFiles/ALICE_v2pt.root");
+    TGraph* g = (TGraphAsymmErrors*) file_v2->Get("v2Plot_2;1");
     g->Fit(functions->GetfPolynomial(), "RQ");
-    g->Fit(functions->GetfPolynomial(), "RQ+");
+    g->Fit(functions->GetfLine(), "RQ+");
     delete g;
     delete file_v2;
+
+    // TODO: Fit with fTrackSpectrum. Seems fine to leave out for now.
+    // Fit CMS pt distribution and store in fExp().
+    /*
+    TFile* fileCMS = new TFile("/home/student/jet-radius-analysis/ToyModel/rootFiles/CMS_pt.root");
+    TGraph* graphCMS = (TGraphAsymmErrors*) fileCMS->Get("ptDistribution;1");
+    graphCMS->Fit(functions->GetfTrackSpectrum(), "RQ");
+    delete graphCMS;
+    delete fileCMS;
+    */
 
     // Initialize random number generator.
     rand = new TRandom3();
@@ -43,9 +53,9 @@ EventModel::~EventModel()
     delete t_bkg;
 }
 
-void EventModel::Write()
+void EventModel::Write(TString fileName)
 {
-    TFile* topFile = new TFile("./rootFiles/ToyModel.root", "RECREATE");
+    TFile* topFile = new TFile(fileName.Data(), "RECREATE");
 
     //_____________ Store all trees. _____________
     TDirectory* treeDir = topFile->mkdir("trees");
@@ -57,7 +67,7 @@ void EventModel::Write()
     //_____________ Store all functions. _____________
     TDirectory* functionDir = topFile->mkdir("functions");
     functionDir->cd();
-    // Todo.
+    // TODO:?
     functionDir->Add(functions->GetfPolynomial(), true);
     functionDir->Add(functions->GetfLine(), true);
     functionDir->Add(functions->GetfTrackSpectrum(), true);
@@ -67,35 +77,53 @@ void EventModel::Write()
     delete topFile;
 }
 
-// uno
-void EventModel::GenerateTrigger()
-{
-    // Todo.
+// @deprecated
+void EventModel::Generate(const string& str) {
     pt  = GetTrackPt();
-    eta = GetRandEta();
-    phi = GetTriggerPhi(pt); 
-    t_trig->Fill();
+    if (str.compare("trig") == 0 || str.compare("bkg") == 0) {
+        eta = GetRandEta();
+        phi = GetTriggerPhi(pt);
+        if (str.compare("trig") == 0) {
+            t_trig->Fill();
+            return;
+        }
+        t_bkg->Fill();
+        return;
+    } else if (str.compare("jet") == 0) {
+        Float_t trigger_phi = phi;
+        eta = -eta;
+        phi = GetAssocPhi(pt, trigger_phi, sigma_dphi);
+        t_assoc->Fill();
+    }
 }
 
-// dos
-void EventModel::GenerateJet()
-{
-    // Todo.
-    Float_t trigger_phi = phi;
-    eta = -eta;
+/*
+ * Replacement for Generate().
+ * Now it gets a random particle and figures out if it satisfies the conditions
+ * for being a trigger particle. If it does, it immediately places a 100 GeV object
+ * at the opposite in phi.
+ */
+void EventModel::GenerateParticle() {
     pt  = GetTrackPt();
-    phi = GetAssocPhi(pt, trigger_phi, sigma_dphi);
-    t_assoc->Fill();
+    if (pt > triggerThreshold && !haveTrigger) {
+    	// Create & store trigger particle.
+    	haveTrigger = true;
+    	eta = GetRandEta();
+    	phi = GetTriggerPhi(pt);
+    	t_trig->Fill();
+    	// Create & store 100 GeV away-side jet.
+    	pt = 100.0;
+    	eta = -eta;
+    	phi = GetAssocPhi(pt, phi, sigma_dphi);
+    	t_assoc->Fill();
+    } else {
+        eta = GetRandEta();
+        phi = GetTriggerPhi(pt);
+        t_bkg->Fill();
+	}
 }
-
-// tres
-void EventModel::GenerateBackground()
-{
-    // Todo.
-    pt  = GetTrackPt();
-    phi = GetTriggerPhi(pt);
-    eta = GetRandEta();
-    t_bkg->Fill();
+void EventModel::NewEvent() {
+	haveTrigger = false;
 }
 
 /****************************************************
@@ -105,7 +133,7 @@ void EventModel::GenerateBackground()
 Float_t EventModel::GetTriggerPhi(Float_t pt) 
 {
     // Todo.
-    functions->GetfdNdPhi()->SetParameter("v2", GetV2(pt));
+    functions->GetfdNdPhi()->SetParameter("v2", 3.0 * GetV2(pt));
     return functions->GetfdNdPhi()->GetRandom();
 }
 
@@ -126,7 +154,7 @@ Float_t EventModel::GetAssocPhi(Float_t pt, Float_t trig_phi, Float_t sigma_dphi
 
     // Create superposition of gaussian and modulation in phi.
     TF1* f_v2_gaus = new TF1("f_v2_gaus", "gaus(0)+1+2*[3]*TMath::Cos(2.*x)", 0, 2*pi);
-    f_v2_gaus->SetParameters(1, assoc_phi_mean, sigma_dphi, GetV2(pt));
+    f_v2_gaus->SetParameters(1, assoc_phi_mean, sigma_dphi, 2.0 * GetV2(pt));
 
     // Store random value of modulated function and clean up. 
     result = f_v2_gaus->GetRandom();
@@ -161,8 +189,8 @@ Double_t EventModel::GetTrackPt() { return functions->GetfTrackSpectrum()->GetRa
 Float_t EventModel::GetV2(Float_t pt)
 {
     if (!has_V2) return 0.0;
-    if (pt < 6)  return 3. * (Float_t)functions->GetfPolynomial()->Eval(pt);
-    return 3. * (Float_t)functions->GetfLine()->Eval(pt);
+    if (pt < 6)  return (Float_t)functions->GetfPolynomial()->Eval(pt);
+    return (Float_t)functions->GetfLine()->Eval(pt);
 }
 
 TTree* EventModel::InitializeTrigger()

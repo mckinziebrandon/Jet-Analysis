@@ -14,7 +14,7 @@
 #include "./include/EventModel.h"
 
 // --------------------------------------------------------------------------------------------
-void PlotModel()
+void PlotModel(Int_t nEvents = 1000)
 {
 
     Float_t eta[3], phi[3], pt[3];
@@ -24,30 +24,41 @@ void PlotModel()
      * Store input file data into trees.                            *
      * ------------------------------------------------------------ */
 
+    TString fileName = "./rootFiles/ToyModel_";
+    fileName += nEvents;
+    fileName += ".root";
+
     // Grab phase space trees from ToyModel.C output. 
-    TFile* f_trees = new TFile("./rootFiles/ToyModel.root");
-    TDirectory* dir_trees = (TDirectory*) f_trees->Get("trees;1");
+    TFile* f_trees = new TFile(fileName.Data());
+    TDirectory* dir_trees 	= (TDirectory*) f_trees->Get("trees;1");
+    TDirectory* dir_jets	= (TDirectory*) f_trees->Get("jetPlots;1");
 
     // Phase space: trigger.
-    TTree* t_trig = (TTree*)dir_trees->Get("tt;1");
+    TTree* t_trig = (TTree*) dir_trees->Get("tt;1");
     t_trig->SetBranchAddress("eta", &eta[trig]);
     t_trig->SetBranchAddress("phi", &phi[trig]);
     t_trig->SetBranchAddress("pt", &pt[trig]);
 
     // Phase space: associated.
-    TTree* t_assoc = (TTree*)dir_trees->Get("ta;1");
+    TTree* t_assoc = (TTree*) dir_trees->Get("ta;1");
     t_assoc->SetBranchAddress("eta", &eta[assoc]);
     t_assoc->SetBranchAddress("phi", &phi[assoc]);
     t_assoc->SetBranchAddress("pt", &pt[assoc]);
 
     // Phase space: background.
-    TTree* t_bkg = (TTree*)dir_trees->Get("tb;1");
+    TTree* t_bkg = (TTree*) dir_trees->Get("tb;1");
     t_bkg->SetBranchAddress("eta", &eta[bkg]);
     t_bkg->SetBranchAddress("phi", &phi[bkg]);
     t_bkg->SetBranchAddress("pt", &pt[bkg]);
     
-    TFile* f_out = new TFile("./rootFiles/PlotModel.root", "RECREATE");
-    f_out->cd();
+    // Per-event jet information.
+    Float_t n;
+    Float_t ptReco;
+    TTree* t_nJetReco = (TTree*) dir_jets->Get("t_nJetReco;1");
+    TTree* t_ptJetReco= (TTree*) dir_jets->Get("t_ptJetReco;1");
+    t_nJetReco->SetBranchAddress("n", &n);
+    t_ptJetReco->SetBranchAddress("pt", &ptReco);
+    TH1* h_dpt = new TH1F("h_dpt", "reco - embed pt", 100, 0.0, 100);
 
     // Create deltaPhi histograms.
     HistName = ";#Delta#phi;dN/d#Delta#phi";
@@ -69,15 +80,21 @@ void PlotModel()
      * ---------------------------------------------------- */
 
     // Loop over tree entries.
-    EventModel* event = new EventModel();
     for (Int_t i_event = 0; i_event < nEvents; i_event++)
     {
         // Store ith event variables in eta[], phi[], pt[].
         t_trig->GetEntry(i_event);
         t_assoc->GetEntry(i_event);
+        t_nJetReco->GetEntry(i_event);
+        t_ptJetReco->GetEntry(i_event);
+
+        for (int i = 0; i < (int) n; i++) {
+			Float_t deltaPt = abs(ptReco - 100.0);
+			h_dpt->Fill(deltaPt);
+        }
 
         // Calculate differences in phase space quantities.
-        Float_t deltaPhi = event->dphi(phi[trig], phi[assoc]);
+        Float_t deltaPhi = EventModel::dphi(phi[trig], phi[assoc]);
         Float_t deltaEta = eta[trig] - eta[assoc];
 
         // Fill Histograms with trig-assoc data.
@@ -90,7 +107,8 @@ void PlotModel()
         {
             // Each event has nBkg entries in t_bkg.
             t_bkg->GetEntry(nBkg * i_event + i_bkg);
-            deltaPhi = event->dphi(phi[trig], phi[bkg]);
+            deltaPhi = EventModel::dphi(phi[trig], phi[bkg]);
+            deltaPhi = EventModel::dphi((float) phi[trig], (float) phi[bkg]);
             deltaEta = eta[trig] - eta[bkg];
 
             // Fill background subtracted quantities. 
@@ -109,7 +127,9 @@ void PlotModel()
      * Drawing and Saving.                                          *
      * ------------------------------------------------------------ */
 
+    TFile* f_out = new TFile("./rootFiles/PlotModel.root", "RECREATE");
     f_out->cd();
+
     TCanvas * c_delta = new TCanvas("c_delta", "canvas delta", 1000, 500);
     c_delta->Divide(2, 2);
 
@@ -154,15 +174,22 @@ void PlotModel()
     c_delta->cd(4);
     h_dphi_deta_bkg->Draw("colz");
 
-
+    f_out->cd();
     c_delta->Write();
 
+    TCanvas* jetCanvas = new TCanvas("jetCanvas", "jetCanvas", 700, 500);
+    jetCanvas->cd();
+    h_dpt->Draw();
+    jetCanvas->Write();
 }
 
 #ifndef __CINT__
-int main() 
+int main(int argc, char* argv[]) 
 {
-    PlotModel();
+    if (argc == 2) 
+        PlotModel(std::atoi(argv[1]));
+    else
+        PlotModel();
     return 0;
 }
 #endif

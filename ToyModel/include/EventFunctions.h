@@ -14,6 +14,7 @@ private:
     TF1* InitfLine();
     TF1* InitfdNdPhi();
     TF1* InitfTrackSpectrum();
+    TF1* InitfExp();
 public:
     // Constructors / Destructors.
     EventFunctions();
