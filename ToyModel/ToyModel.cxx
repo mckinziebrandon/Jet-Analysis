@@ -49,21 +49,18 @@ void ToyModel(Int_t nEvents = 1000) {
     	debugStr += " Percent Complete.";
     	print(debugStr.Data(), i_event, nEvents);
 
-    	// -------------- NEW -------------
+    	// Resets haveTrigger flag.
     	jetFinder->NewEvent();
-    	for (Int_t i = 0; i < nBkg; i++) {
+
+    	// Loop over number of particles desired in this event.
+    	for (Int_t i = 0; i < nParticles; i++) {
+    		// Sample from pT and v2 distributions to get a random particle.
+    		// If the particle has pt > threshold, then it is a trigger, unless
+    		// a trigger has already been found. When a trigger is found,
+    		// an artificial 100 GeV jet will be made opposite to it in eta, phi,
+    		// with a Gaussian spread about deltaPhi = pi.
     		jetFinder->GenerateParticle();
     	}
-    	// --------------------------------
-
-        // Place arbitrary high pt objects into this event.
-        debugStr  = "Embedding ";
-        debugStr += jetFinder->GetNumEmbed();
-        debugStr += " 100 GeV objects into event number ";
-        debugStr += i_event;
-        print(debugStr.Data(), i_event, nEvents);
-        // TODO: embedding technically takes place in GenerateParticle() now.
-        jetFinder->EmbedJetsInEvent();
 
         // Use ClusterSequence to get store list of jets in this event.
         jetFinder->FindJetsInEvent();
@@ -71,9 +68,6 @@ void ToyModel(Int_t nEvents = 1000) {
         debugStr += jetFinder->GetNumJetsInEvent();
         debugStr += " jets in this event.";
         print(debugStr.Data(), i_event, nEvents);
-//        jetFinder->PrintJetsInEvent();
-
-        // For now, just fills hNumJets.
         jetFinder->ResetEventVariables();
     }
 

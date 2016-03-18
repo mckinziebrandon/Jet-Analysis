@@ -21,7 +21,7 @@ MyJetFinder::MyJetFinder() : EventModel() {
 MyJetFinder::~MyJetFinder() {
 }
 
-/*
+/* @deprecated
  * Hard-code some single-particle "jetsVector" into eventParticlesVector, as a way of
  * testing the jet finder abilities.
  */
@@ -54,12 +54,35 @@ const Int_t MyJetFinder::GetNumEmbed() {
  * std::vector for analysis in fastjet.
  */
 void MyJetFinder::GenerateParticle() {
+	Bool_t hadTrigger = haveTrigger;
     EventModel::GenerateParticle();
-    TLorentzVector v_temp;
-    v_temp.SetPtEtaPhiM(pt, eta, phi, 0.0);
-    PseudoJet jet_temp(v_temp.Px(), v_temp.Py(), v_temp.Pz(), v_temp.E());
-    particlesVector.push_back(jet_temp);
-    eventParticlesVector.push_back(jet_temp);
+    // Check if found first trigger on above call to GenerateParticle().
+    if (hadTrigger != haveTrigger) {
+    	// ---------- Trigger ----------
+    	TLorentzVector v_temp;
+		v_temp.SetPtEtaPhiM(pt, eta, phi, 0.0);
+		PseudoJet jet_temp(v_temp.Px(), v_temp.Py(), v_temp.Pz(), v_temp.E());
+		particlesVector.push_back(jet_temp);
+		eventParticlesVector.push_back(jet_temp);
+    	// ---------- Jet ----------
+		t_assoc->GetEntry(t_assoc->GetEntries() -1);
+		if (pt != 100.0) {
+			cout << "jet pt not as expected in MyJetFinder::GenerateParticle()." << endl;
+		} else {
+			cout << "You good dawg." << endl;
+		}
+		v_temp.SetPtEtaPhiM(pt, eta, phi, 0.0);
+		jet_temp = PseudoJet(v_temp.Px(), v_temp.Py(), v_temp.Pz(), v_temp.E());
+		particlesVector.push_back(jet_temp);
+		eventParticlesVector.push_back(jet_temp);
+
+    } else {
+    	TLorentzVector v_temp;
+		v_temp.SetPtEtaPhiM(pt, eta, phi, 0.0);
+		PseudoJet jet_temp(v_temp.Px(), v_temp.Py(), v_temp.Pz(), v_temp.E());
+		particlesVector.push_back(jet_temp);
+		eventParticlesVector.push_back(jet_temp);
+    }
 }
 
 /*

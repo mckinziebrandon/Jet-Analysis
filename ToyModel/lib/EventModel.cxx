@@ -87,11 +87,18 @@ void EventModel::GenerateParticle() {
     	eta = GetRandEta();
     	phi = GetTriggerPhi(pt);
     	t_trig->Fill();
+    	// Store pt eta phi before resetting to artificial jet.
+    	Float_t tempPtEtaPhi[3] = {pt, eta, phi};
     	// Create & store 100 GeV away-side jet.
     	pt = 100.0;
     	eta = -eta;
     	phi = GetAssocPhi(pt, phi, sigma_dphi);
     	t_assoc->Fill();
+    	// Restore legitimate pt eta phi for functions that may want
+    	// to use them later.
+    	pt = tempPtEtaPhi[0];
+    	eta = tempPtEtaPhi[1];
+    	phi = tempPtEtaPhi[2];
     } else {
         eta = GetRandEta();
         phi = GetTriggerPhi(pt);
@@ -108,7 +115,8 @@ void EventModel::NewEvent() {
 *****************************************************/
 Float_t EventModel::GetTriggerPhi(Float_t pt) 
 {
-    // Todo.
+    // Todo: Implement more legitmate method of getting v2 than just
+	// multiplying by 3.0 . . . smh.
     functions->GetfdNdPhi()->SetParameter("v2", 3.0 * GetV2(pt));
     return functions->GetfdNdPhi()->GetRandom();
 }

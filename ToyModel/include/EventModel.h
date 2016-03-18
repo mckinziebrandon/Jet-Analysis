@@ -13,6 +13,7 @@ const Int_t bkg     = 2;
 // ---------- Constants ----------
 const Float_t pi    = TMath::Pi();
 const Int_t nBkg                = 100;
+const Int_t nParticles			= 1000;
 const Int_t nCanvas             = 3;
 const Int_t trig_pt_threshold   = 1;
 const Int_t parton_mass         = 0;
