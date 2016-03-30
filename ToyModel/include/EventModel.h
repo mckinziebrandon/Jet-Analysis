@@ -4,20 +4,13 @@
 #include "EventFunctions.h"
 #include <string>
 
-// --- Identifiers ---
-const Int_t trig    = 0;
-const Int_t assoc   = 1;
-const Int_t bkg     = 2;
-// -------------------
-
 // ---------- Constants ----------
 const Float_t pi    = TMath::Pi();
 const Int_t nBkg                = 100;
 const Int_t nParticles			= 1000;
-const Int_t nCanvas             = 3;
 const Int_t trig_pt_threshold   = 1;
 const Int_t parton_mass         = 0;
-const Float_t sigma_dphi        = (pi / 4) / 2;
+const Float_t sigmaDeltaPhi     = (pi / 4) / 2;
 const Float_t triggerThreshold = 5.0;
 // -------------------------------
 
@@ -27,32 +20,42 @@ public:
     // Constructors / Destructors.
     EventModel();
     ~EventModel();
-    // Setters.
+    /* Samples from pt distribution to determine whether or not trigger particle. 
+     * If sampled pt > trigPtThreshold, then designated as a trigger and also
+     * artificically embed a high-pt "associated" object opposite to it in eta. 
+     * Otherwise, designate as background and fill tBkg with pt, eta, phi. */
     void GenerateParticle();
-    void NewEvent();
-    // Getters.
-    Float_t GetTriggerPhi(Float_t pt);
-    Float_t GetAssocPhi(Float_t pt, Float_t tphi, Float_t sigma);
+    /* Sample randomly from v2(pt)-modulated phi distribution. */ 
+    Float_t GetPhi(Float_t pt);
+    /* Returns phi value centered at pi from trigPhi with Gaussian spread. */ 
+    Float_t GetAssocPhi(Float_t trigPhi);
+    /* Returns random number b/w -1 and 1, corresponding to ALICE acceptance. */
     Float_t GetRandEta();
+    /* Returns random sample from fits to raw data pt distribution. */
     Double_t GetTrackPt();
-    // Miscellaneous. 
-    static Float_t dphi(Float_t p, Float_t p2);
+    /* Writes and organizes all model information into fileName.root. */
     void Write(TString fileName);
+    /* Returns difference between inputs while constraining return value 
+     * to be in [0., 2. * pi]; */
+    static Float_t dphi(Float_t p, Float_t p2);
 protected:
-	Bool_t haveTrigger = false; // flag per-event if found trigger particle yet.
-    Float_t eta, phi, pt;
-    // Instance objects.
-    TTree* t_trig;
-    TTree* t_assoc;
-    TTree* t_bkg;
+    /* Random number generator */
     TRandom3* rand;
-    // User-defined EventFunctions.
+    /* The 'functions' variable has access to all sampling distributions the user
+     * may wish to use/access throughout the model. */
     EventFunctions* functions;
-    // Private helper methods.
+    /* Depending on value of pt, evaluates either 
+     * polynomial or linear fit to the raw pt data distribution. */
     Float_t GetV2(Float_t pt);
-    TTree* InitializeBackground();
-    TTree* InitializeJet();
+    /* Create the underlying data trees to store particle information.
+     * Each function simply creates a tree with pt, eta, phi branches and returns it. */
+    Float_t eta, phi, pt;
+    TTree* tTrig;
     TTree* InitializeTrigger();
+    TTree* tAssoc;
+    TTree* InitializeAssoc();
+    TTree* tBkg;
+    TTree* InitializeBackground();
 };
 
 #endif

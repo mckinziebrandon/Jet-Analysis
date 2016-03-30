@@ -81,11 +81,9 @@ void EventModel::Write(TString fileName)
  */
 void EventModel::GenerateParticle() {
     pt  = GetTrackPt();
-    if (pt > triggerThreshold && !haveTrigger) {
-    	// Create & store trigger particle.
-    	haveTrigger = true;
+    if (pt > triggerThreshold) {
     	eta = GetRandEta();
-    	phi = GetTriggerPhi(pt);
+    	phi = GetPhi(pt);
     	t_trig->Fill();
     	// Store pt eta phi before resetting to artificial jet.
     	Float_t tempPtEtaPhi[3] = {pt, eta, phi};
@@ -101,19 +99,16 @@ void EventModel::GenerateParticle() {
     	phi = tempPtEtaPhi[2];
     } else {
         eta = GetRandEta();
-        phi = GetTriggerPhi(pt);
+        phi = GetPhi(pt);
         t_bkg->Fill();
 	}
-}
-void EventModel::NewEvent() {
-	haveTrigger = false;
 }
 
 /****************************************************
 * Returns random value of phi that depends on       *
 * the value of v2(pt) input parameter for dN/dPhi.  *
 *****************************************************/
-Float_t EventModel::GetTriggerPhi(Float_t pt) 
+Float_t EventModel::GetPhi(Float_t pt) 
 {
     // Todo: Implement more legitmate method of getting v2 than just
 	// multiplying by 3.0 . . . smh.
@@ -126,17 +121,17 @@ Float_t EventModel::GetTriggerPhi(Float_t pt)
 * Similar to dphi(p1, p2), this returns a deltaPhi, but with a gaussian spread  *
 * centered at pi from the trigger particle.                                     *
 *********************************************************************************/
-Float_t EventModel::GetAssocPhi(Float_t pt, Float_t trig_phi, Float_t sigma_dphi)
+Float_t EventModel::GetAssocPhi(Float_t trigPhi)
 {
     // Setup. 
-    Float_t assoc_phi_mean, result;
+    Float_t mu, result;
 
     // Get the average phi, centered at pi w.r.t. the trigger.
-    assoc_phi_mean  = trig_phi + pi;
-    if (assoc_phi_mean > 2 * pi) 
-        assoc_phi_mean -= 2 * pi;
+    mu  = trig_phi + pi;
+    if (mu > 2 * pi) 
+        mu -= 2 * pi;
 
-    return (Float_t) rand->Gaus(assoc_phi_mean, sigma_dphi);
+    return (Float_t) rand->Gaus(mu, sigmaDeltaPhi);
 }
 
 /****************************************************
@@ -171,16 +166,16 @@ Float_t EventModel::GetV2(Float_t pt)
 
 TTree* EventModel::InitializeTrigger()
 {
-    TTree* tt = new TTree("tt", "Trigger attributes");
+    TTree* tt = new TTree("tTrig", "Trigger particle attributes");
     tt->Branch("eta", &eta);
     tt->Branch("phi", &phi);
     tt->Branch("pt", &pt);
     return tt;
 }
 
-TTree* EventModel::InitializeJet()
+TTree* EventModel::InitializeAssoc()
 {
-    TTree* ta = new TTree("ta", "Associated attributes");
+    TTree* ta = new TTree("tAssoc", "Associated particle attributes");
     ta->Branch("eta", &eta);
     ta->Branch("phi", &phi);
     ta->Branch("pt", &pt);
@@ -189,7 +184,7 @@ TTree* EventModel::InitializeJet()
 
 TTree* EventModel::InitializeBackground()
 {
-    TTree* tb = new TTree("tb", "Background attributes");
+    TTree* tb = new TTree("tBkg", "Background particle attributes");
     tb->Branch("eta", &eta);
     tb->Branch("phi", &phi);
     tb->Branch("pt", &pt);
