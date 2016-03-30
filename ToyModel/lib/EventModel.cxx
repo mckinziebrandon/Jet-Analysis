@@ -7,9 +7,9 @@
 *************************************/
 EventModel::EventModel()
 {    
-    t_trig  = (TTree*)InitializeTrigger();
-    t_assoc = (TTree*)InitializeJet();
-    t_bkg   = (TTree*)InitializeBackground();
+    tTrig  = (TTree*)InitializeTrigger();
+    tAssoc = (TTree*)InitializeAssoc();
+    tBkg   = (TTree*)InitializeBackground();
 
     // Initialize all functions.
     functions = new EventFunctions();
@@ -44,9 +44,9 @@ EventModel::~EventModel()
 {
     delete functions;
     delete rand;
-    delete t_trig;
-    delete t_assoc;
-    delete t_bkg;
+    delete tTrig;
+    delete tAssoc;
+    delete tBkg;
 }
 
 void EventModel::Write(TString fileName)
@@ -56,9 +56,9 @@ void EventModel::Write(TString fileName)
     //_____________ Store all trees. _____________
     TDirectory* treeDir = topFile->mkdir("trees");
     treeDir->cd();
-    treeDir->Add(t_trig, true);
-    treeDir->Add(t_assoc, true);
-    treeDir->Add(t_bkg, true);
+    treeDir->Add(tTrig, true);
+    treeDir->Add(tAssoc, true);
+    treeDir->Add(tBkg, true);
 
     //_____________ Store all functions. _____________
     TDirectory* functionDir = topFile->mkdir("functions");
@@ -81,17 +81,17 @@ void EventModel::Write(TString fileName)
  */
 void EventModel::GenerateParticle() {
     pt  = GetTrackPt();
-    if (pt > triggerThreshold) {
+    if (pt > trigPtThreshold) {
     	eta = GetRandEta();
     	phi = GetPhi(pt);
-    	t_trig->Fill();
+    	tTrig->Fill();
     	// Store pt eta phi before resetting to artificial jet.
     	Float_t tempPtEtaPhi[3] = {pt, eta, phi};
     	// Create & store 100 GeV away-side jet.
     	pt = 100.0;
     	eta = -eta;
-    	phi = GetAssocPhi(pt, phi, sigma_dphi);
-    	t_assoc->Fill();
+    	phi = GetAssocPhi(phi);
+    	tAssoc->Fill();
     	// Restore legitimate pt eta phi for functions that may want
     	// to use them later.
     	pt = tempPtEtaPhi[0];
@@ -100,7 +100,7 @@ void EventModel::GenerateParticle() {
     } else {
         eta = GetRandEta();
         phi = GetPhi(pt);
-        t_bkg->Fill();
+        tBkg->Fill();
 	}
 }
 
@@ -127,7 +127,7 @@ Float_t EventModel::GetAssocPhi(Float_t trigPhi)
     Float_t mu, result;
 
     // Get the average phi, centered at pi w.r.t. the trigger.
-    mu  = trig_phi + pi;
+    mu  = trigPhi + pi;
     if (mu > 2 * pi) 
         mu -= 2 * pi;
 

@@ -49,9 +49,6 @@ void ToyModel(Int_t nEvents = 1000) {
     	debugStr += " Percent Complete.";
     	print(debugStr.Data(), i_event, nEvents);
 
-    	// Resets haveTrigger flag.
-    	jetFinder->NewEvent();
-
     	// Loop over number of particles desired in this event.
     	for (Int_t i = 0; i < nParticles; i++) {
     		// Sample from pT and v2 distributions to get a random particle.
@@ -63,9 +60,9 @@ void ToyModel(Int_t nEvents = 1000) {
     	}
 
         // Use ClusterSequence to get store list of jets in this event.
-        jetFinder->FindJetsInEvent();
+        jetFinder->FindJets();
         debugStr  = "Found ";
-        debugStr += jetFinder->GetNumJetsInEvent();
+        debugStr += jetFinder->GetNumJets();
         debugStr += " jets in this event.";
         print(debugStr.Data(), i_event, nEvents);
         jetFinder->ResetEventVariables();

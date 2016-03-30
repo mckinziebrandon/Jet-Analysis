@@ -8,10 +8,9 @@
 const Float_t pi    = TMath::Pi();
 const Int_t nBkg                = 100;
 const Int_t nParticles			= 1000;
-const Int_t trig_pt_threshold   = 1;
 const Int_t parton_mass         = 0;
 const Float_t sigmaDeltaPhi     = (pi / 4) / 2;
-const Float_t triggerThreshold = 5.0;
+const Float_t trigPtThreshold = 5.0;
 // -------------------------------
 
 class EventModel 
