@@ -11,10 +11,11 @@ ROOTCLING 	= `rootcling`
 FJETFLAGS 	= `fastjet-config --cxxflags --libs --plugins`
 
 DEPS= $(INCLUDE)/EventModel.h $(INCLUDE)/RootClasses.h  $(INCLUDE)/EventFunctions.h $(INCLUDE)/MyJetFinder.h
-LIBFILES= $(LIB)/EventModel.so $(LIB)/RootClasses.so $(LIB)/EventFunctions.so $(LIB)/MyJetFinder.so
+LIBFILES= $(LIB)/EventModel.so  $(LIB)/EventFunctions.so $(LIB)/MyJetFinder.so
 
 OBJ1= ToyModel.so $(LIBFILES)
 OBJ2= PlotModel.so $(LIBFILES)
+OBJ3= PlotFinder.so $(LIBFILES)
 
 
 DICT=EventModelDict.cxx
@@ -34,8 +35,12 @@ PlotModel: $(OBJ2)
 	echo "Beginning compilation of $@ . . . "
 	$(CXX) -o $@ $(OBJ2) $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
 
+PlotFinder: $(OBJ3)
+	echo "Beginning compilation of $@ . . . "
+	$(CXX) -o $@ $(OBJ3) $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
+
 FileWithFastJet:
 	 g++ short-example.cc -o short-example `fastjet-config --cxxflags --libs --plugins`
 
 clean:
-	rm *.pcm *.so *Dict* $(LIB)/*.so
+	rm *.so $(LIB)/*.so

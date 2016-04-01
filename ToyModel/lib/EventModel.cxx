@@ -40,8 +40,7 @@ EventModel::EventModel()
 * Default EventModel Destructor.    *
 * Deletes instance objects.         *
 *************************************/
-EventModel::~EventModel() 
-{
+EventModel::~EventModel() {
     delete functions;
     delete rand;
     delete tTrig;
@@ -49,8 +48,7 @@ EventModel::~EventModel()
     delete tBkg;
 }
 
-void EventModel::Write(TString fileName)
-{
+void EventModel::Write(TString fileName) {
     TFile* topFile = new TFile(fileName.Data(), "RECREATE");
 
     //_____________ Store all trees. _____________
@@ -63,7 +61,6 @@ void EventModel::Write(TString fileName)
     //_____________ Store all functions. _____________
     TDirectory* functionDir = topFile->mkdir("functions");
     functionDir->cd();
-    // TODO:?
     functionDir->Add(functions->GetfPolynomial(), true);
     functionDir->Add(functions->GetfLine(), true);
     functionDir->Add(functions->GetfTrackSpectrum(), true);
@@ -73,45 +70,39 @@ void EventModel::Write(TString fileName)
     delete topFile;
 }
 
-/*
- * Replacement for Generate().
- * Now it gets a random particle and figures out if it satisfies the conditions
- * for being a trigger particle. If it does, it immediately places a 100 GeV object
- * at the opposite in phi.
- */
-void EventModel::GenerateParticle() {
-    pt  = GetTrackPt();
-    if (pt > trigPtThreshold) {
-    	eta = GetRandEta();
-    	phi = GetPhi(pt);
-    	tTrig->Fill();
-    	// Store pt eta phi before resetting to artificial jet.
-    	Float_t tempPtEtaPhi[3] = {pt, eta, phi};
-    	// Create & store 100 GeV away-side jet.
-    	pt = 100.0;
+Float_t EventModel::Generate(const string& str, Int_t n) {
+    if (str == "bkg") {
+        for (Int_t i = 0; i < n; i++) {
+            pt  = GetTrackPt();
+            eta = GetRandEta();
+            phi = GetPhi(pt);
+            tBkg->Fill();
+        }
+        return pt;
+	} else if (str == "trig") {
+        // Create the trigger particle. 
+        pt  = GetTrackPt(trigPtThreshold);
+        eta = GetRandEta();
+        phi = GetPhi(pt);
+        tTrig->Fill();
+        Float_t res = pt;
+        // Create its associated particle.
+        pt = 100.0;
     	eta = -eta;
     	phi = GetAssocPhi(phi);
     	tAssoc->Fill();
-    	// Restore legitimate pt eta phi for functions that may want
-    	// to use them later.
-    	pt = tempPtEtaPhi[0];
-    	eta = tempPtEtaPhi[1];
-    	phi = tempPtEtaPhi[2];
+        return res;
     } else {
-        eta = GetRandEta();
-        phi = GetPhi(pt);
-        tBkg->Fill();
-	}
+        std::cout << "Error: EventModel::Generate() called with bad str." << std::endl;
+        return -1;
+    }
 }
-
 /****************************************************
 * Returns random value of phi that depends on       *
 * the value of v2(pt) input parameter for dN/dPhi.  *
 *****************************************************/
-Float_t EventModel::GetPhi(Float_t pt) 
-{
-    // Todo: Implement more legitmate method of getting v2 than just
-	// multiplying by 3.0 . . . smh.
+Float_t EventModel::GetPhi(Float_t pt) {
+    // Todo: Implement more legitmate method of getting v2 than mult by 2.
     functions->GetfdNdPhi()->SetParameter("v2", 3.0 * GetV2(pt));
     return functions->GetfdNdPhi()->GetRandom();
 }
@@ -121,17 +112,19 @@ Float_t EventModel::GetPhi(Float_t pt)
 * Similar to dphi(p1, p2), this returns a deltaPhi, but with a gaussian spread  *
 * centered at pi from the trigger particle.                                     *
 *********************************************************************************/
-Float_t EventModel::GetAssocPhi(Float_t trigPhi)
-{
+Float_t EventModel::GetAssocPhi(Float_t trigPhi) {
     // Setup. 
     Float_t mu, result;
 
     // Get the average phi, centered at pi w.r.t. the trigger.
     mu  = trigPhi + pi;
-    if (mu > 2 * pi) 
-        mu -= 2 * pi;
-
-    return (Float_t) rand->Gaus(mu, sigmaDeltaPhi);
+    result = (Float_t) rand->Gaus(mu, sigmaDeltaPhi);
+    if (result > 2 * pi) {
+        result -= 2 * pi;
+    } else if (result < 0.0) {
+        result += 2 * pi;
+    }
+    return result;
 }
 
 /****************************************************
@@ -146,10 +139,15 @@ Float_t EventModel::dphi(Float_t phi1, Float_t phi2)
 }
 
 /* Returns random eta uniform in [-1, 1]. */
-Float_t EventModel::GetRandEta() { return rand->Uniform(-1.00, 1.00); }
+Float_t EventModel::GetRandEta() { 
+    return rand->Uniform(-1.00, 1.00); 
+}
 
 /* Returns random pt from boltzmann probability distribution. */
-Double_t EventModel::GetTrackPt() { return functions->GetfTrackSpectrum()->GetRandom(); }
+Double_t EventModel::GetTrackPt(Float_t xMin) { 
+    if (xMin == 0.2) return functions->GetfTrackSpectrum()->GetRandom();
+    return functions->GetfTrackSpectrum()->GetRandom(xMin, 200.0); 
+}
 
 
 /*===============================================================================
@@ -158,10 +156,10 @@ Double_t EventModel::GetTrackPt() { return functions->GetfTrackSpectrum()->GetRa
 ---------------------------------------------------------------------------------
 ================================================================================*/
 
-Float_t EventModel::GetV2(Float_t pt)
-{
-    if (pt < 6)  return (Float_t)functions->GetfPolynomial()->Eval(pt);
-    return (Float_t)functions->GetfLine()->Eval(pt);
+Float_t EventModel::GetV2(Float_t pt) {
+    if (pt < 6)         return (Float_t) functions->GetfPolynomial()->Eval(pt);
+    else if (pt < 18)   return (Float_t) functions->GetfLine()->Eval(pt);
+    return (Float_t) functions->GetfLine()->Eval(18.);
 }
 
 TTree* EventModel::InitializeTrigger()

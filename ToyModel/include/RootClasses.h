@@ -29,15 +29,36 @@ using namespace std;
 #include "TString.h"
 #include "TTree.h"
 
-
-// -----------------------------------------------------------------------------
-// Function Prototypes
-// -----------------------------------------------------------------------------
-
 template<typename Hist>
-void SetDrawOptions(Hist* h, TString x_label="", TString  y_label="");
+void SetDrawOptions(Hist* h, Color_t col, TString x_label="", TString  y_label="") {
+    h->SetStats(0);
+    h->SetFillColor(col);
+    h->SetLineColor(col);
+    h->SetLineWidth(2);
+    h->SetFillStyle(0);
+    if (x_label != "" && y_label != "")
+    {
+        h->SetTitle("");
+        h->GetXaxis()->SetTitle(x_label.Data());
+        h->GetYaxis()->SetTitle(y_label.Data());
+    }
+    h->GetXaxis()->SetTitleSize(0.05);
+    h->GetYaxis()->SetTitleOffset(1.2);
+    h->GetYaxis()->SetTitleSize(0.05);
+    h->GetXaxis()->CenterTitle();
+    h->GetYaxis()->CenterTitle();
+}
+
+// Draws histogram in its own canvas and sets personal drawing options. 
 template<typename Hist>
-TCanvas* DrawHistogram(Hist* h);
-TCanvas* DrawHists(const Int_t n, TString index, TString names[], TTree* tree);
+TCanvas* DrawHistogram(Hist* h)
+{
+    TCanvas* c = new TCanvas("c", "canvas from DrawHistogram", 700, 500);
+    c->cd();
+    h->Draw();
+    TString x = h->GetXaxis()->GetTitle();
+    TString y = h->GetYaxis()->GetTitle();
+    return c;
+}
 
 #endif

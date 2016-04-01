@@ -22,8 +22,9 @@ void print(const char* str, Int_t i_event, Int_t nEvents) {
 	}
 }
 
-// --------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------
 void ToyModel(Int_t nEvents = 1000) {
+
     using std::cout;
     using std::flush;
 
@@ -43,21 +44,16 @@ void ToyModel(Int_t nEvents = 1000) {
     cout << "Beginning ToyModel simulation of " << nEvents << " events." << endl;
     // Simulate nEvents with randomly generated tracks. 
     for (Int_t i_event = 0; i_event < nEvents; i_event++) {
+
     	// Print progress updates.
     	debugStr = "\n";
     	debugStr += (Float_t)(i_event * 100)/nEvents;
     	debugStr += " Percent Complete.";
     	print(debugStr.Data(), i_event, nEvents);
 
-    	// Loop over number of particles desired in this event.
-    	for (Int_t i = 0; i < nParticles; i++) {
-    		// Sample from pT and v2 distributions to get a random particle.
-    		// If the particle has pt > threshold, then it is a trigger, unless
-    		// a trigger has already been found. When a trigger is found,
-    		// an artificial 100 GeV jet will be made opposite to it in eta, phi,
-    		// with a Gaussian spread about deltaPhi = pi.
-    		jetFinder->GenerateParticle();
-    	}
+        // Generate specified number/types of particles.
+        jetFinder->Generate("trig", 1);
+        jetFinder->Generate("bkg", nBkg);
 
         // Use ClusterSequence to get store list of jets in this event.
         jetFinder->FindJets();
@@ -65,6 +61,7 @@ void ToyModel(Int_t nEvents = 1000) {
         debugStr += jetFinder->GetNumJets();
         debugStr += " jets in this event.";
         print(debugStr.Data(), i_event, nEvents);
+
         jetFinder->ResetEventVariables();
     }
 
@@ -80,11 +77,9 @@ void ToyModel(Int_t nEvents = 1000) {
     jetFinder->Write(fileName);
 }
 
-/*
- * This main function is needed to compile via "make."
+/* This main function is needed to compile via "make."
  * Runs ToyModel over argv[1] number of events, if specified,
- * else runs for 1000 events.
- */
+ * else runs for 1000 events. */
 #ifndef __CINT__
 int main(int argc, char* argv[]) {
     if (argc == 2) {

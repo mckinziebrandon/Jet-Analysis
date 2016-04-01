@@ -8,7 +8,7 @@
  */
 MyJetFinder::MyJetFinder() : EventModel() {
     t_nJetReco = new TNtuple("t_nJetReco", "Number of jets in event", "n");
-    t_ptJetReco= new TNtuple("t_ptJetReco", "pt of reco jets in event", "pt");
+    tJetReco= new TNtuple("tJetReco", "pt of reco jets in event", "pt:eta:phi");
     // Create jet definition. Should not change.
     jetDef = JetDefinition(antikt_algorithm, R);
 }
@@ -24,16 +24,15 @@ MyJetFinder::~MyJetFinder() {
  * Depending on STR, generates a type of particle and places it in the parcticles
  * std::vector for analysis in fastjet.
  */
-void MyJetFinder::GenerateParticle() {
-    EventModel::GenerateParticle();
-    // Check if found first trigger on above call to GenerateParticle().
-    if (pt > trigPtThreshold) {
-    	// ---------- Trigger ----------
-    	TLorentzVector vTemp;
-		vTemp.SetPtEtaPhiM(pt, eta, phi, 0.0);
-		PseudoJet jetTemp(vTemp.Px(), vTemp.Py(), vTemp.Pz(), vTemp.E());
-		particlesVector.push_back(jetTemp);
+void MyJetFinder::Generate(const string& str, Int_t n) {
+    // hi
+    pt = EventModel::Generate(str, n);
+    TLorentzVector vTemp;
+    vTemp.SetPtEtaPhiM(pt, eta, phi, 0.0);
+    PseudoJet jetTemp(vTemp.Px(), vTemp.Py(), vTemp.Pz(), vTemp.E());
+    particlesVector.push_back(jetTemp);
 
+    if (pt > trigPtThreshold) {
     	// ---------- Jet ----------
 		tAssoc->GetEntry(tAssoc->GetEntries() - 1); // Get most recent associated particle. 
 		if (pt != 100.0) {
@@ -41,12 +40,6 @@ void MyJetFinder::GenerateParticle() {
         }
 		vTemp.SetPtEtaPhiM(pt, eta, phi, 0.0);
 		jetTemp = PseudoJet(vTemp.Px(), vTemp.Py(), vTemp.Pz(), vTemp.E());
-		particlesVector.push_back(jetTemp);
-
-    } else {
-    	TLorentzVector vTemp;
-		vTemp.SetPtEtaPhiM(pt, eta, phi, 0.0);
-		PseudoJet jetTemp(vTemp.Px(), vTemp.Py(), vTemp.Pz(), vTemp.E());
 		particlesVector.push_back(jetTemp);
     }
 }
@@ -56,10 +49,10 @@ void MyJetFinder::GenerateParticle() {
  */
 void MyJetFinder::FindJets() {
     clusterSequence    = new ClusterSequence(particlesVector, jetDef);
-    jetsVector         = sorted_by_pt(clusterSequence->inclusive_jets(ptmin));
+    jetsVector         = sorted_by_pt(clusterSequence->inclusive_jets(/*ptmin*/));
     t_nJetReco->Fill((Int_t) jetsVector.size());
     for (Int_t i = 0; i < jetsVector.size(); i++) {
-    	t_ptJetReco->Fill(jetsVector[i].pt());
+    	tJetReco->Fill(jetsVector[i].pt(), jetsVector[i].eta(), jetsVector[i].phi());
     }
 }
 
@@ -107,7 +100,7 @@ void MyJetFinder::Write(TString fileName) {
     TDirectory* jetDir = jetFile->mkdir("jetPlots");
     jetDir->cd();
     jetDir->Add(t_nJetReco, true);
-    jetDir->Add(t_ptJetReco, true);
+    jetDir->Add(tJetReco, true);
 
     jetFile->Write();
     delete jetFile;

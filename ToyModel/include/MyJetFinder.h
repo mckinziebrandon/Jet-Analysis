@@ -8,8 +8,8 @@ using namespace fastjet;
 using std::vector;
 using std::string;
 
-const Float_t R     = 0.2;
-const Float_t ptmin = 20.0;
+const Float_t R     = 0.3;
+const Float_t ptmin = 0.0;
 
 class MyJetFinder: public EventModel {
 public:
@@ -17,6 +17,7 @@ public:
     ~MyJetFinder();
     void        FindJets();
     void        GenerateParticle();
+    void        Generate(const string& str, Int_t n);
 	Int_t       GetNumJets();
     Double_t    GetTrackPt();
     void        PrintJetsInEvent();
@@ -29,7 +30,7 @@ private:
     JetDefinition 		jetDef;
     /* Underlying data structures for jet information are TNtuples. */
     TNtuple* 			t_nJetReco;
-    TNtuple* 			t_ptJetReco;
+    TNtuple* 			tJetReco;
     /* clusterSequence object is responsible for running the jet clustering. */
     ClusterSequence* 	clusterSequence;
     /* Store vector of particles wrapped as PseudoJets before any clustering occurs. */

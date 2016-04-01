@@ -4,6 +4,11 @@
 #include "EventFunctions.h"
 #include <string>
 
+const int trig = 0;
+const int assoc = 1;
+const int bkg = 2;
+
+
 // ---------- Constants ----------
 const Float_t pi    = TMath::Pi();
 const Int_t nBkg                = 100;
@@ -24,6 +29,9 @@ public:
      * artificically embed a high-pt "associated" object opposite to it in eta. 
      * Otherwise, designate as background and fill tBkg with pt, eta, phi. */
     void GenerateParticle();
+    /* Generate N number of particles of type STR, where STR can be either
+       "trig" or "bkg" */
+    Float_t Generate(const string& str, Int_t n);
     /* Sample randomly from v2(pt)-modulated phi distribution. */ 
     Float_t GetPhi(Float_t pt);
     /* Returns phi value centered at pi from trigPhi with Gaussian spread. */ 
@@ -31,7 +39,7 @@ public:
     /* Returns random number b/w -1 and 1, corresponding to ALICE acceptance. */
     Float_t GetRandEta();
     /* Returns random sample from fits to raw data pt distribution. */
-    Double_t GetTrackPt();
+    Double_t GetTrackPt(Float_t xMin=0.2);
     /* Writes and organizes all model information into fileName.root. */
     void Write(TString fileName);
     /* Returns difference between inputs while constraining return value 
