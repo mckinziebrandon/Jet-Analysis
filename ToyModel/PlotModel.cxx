@@ -29,6 +29,8 @@ void PlotModel(Int_t nEvents = 1000) {
     // Grab phase space trees from ToyModel.C output. 
     TFile*      fTrees = new TFile(fileName.Data());
     TDirectory* dirTrees = (TDirectory*) fTrees->Get("trees;1");
+    TDirectory* dirFuncs = (TDirectory*) fTrees->Get("functions;1");
+    TF1* ptDist = (TF1*) dirFuncs->Get("fspectrum;1");
 
     // Phase space: trigger.
     TTree* tTrig = (TTree*) dirTrees->Get("tTrig;1");
@@ -159,9 +161,12 @@ void PlotModel(Int_t nEvents = 1000) {
     cBasic->Divide(3, 3);
     Int_t pad = 1;
 
+
     // Trigger 
     cBasic->cd(pad++);
-    tTrig->Draw("pt");
+    tTrig->Draw("pt>>hTrig");
+    TH1* hTrig = (TH1F*)gDirectory->Get("hTrig");
+    hTrig->DrawNormalized();
     cBasic->cd(pad++);
     tTrig->Draw("eta");
     cBasic->cd(pad++);
@@ -177,7 +182,11 @@ void PlotModel(Int_t nEvents = 1000) {
 
     // Background 
     cBasic->cd(pad++);
-    tBkg->Draw("pt");
+    tBkg->Draw("pt>>hBkg");
+    TH1* hBkg = (TH1F*)gDirectory->Get("hBkg");
+    hBkg->DrawNormalized();
+    ptDist->GetHistogram()->DrawNormalized("same");
+    ptDist->Draw("same");
     cBasic->cd(pad++);
     tBkg->Draw("eta");
     cBasic->cd(pad++);

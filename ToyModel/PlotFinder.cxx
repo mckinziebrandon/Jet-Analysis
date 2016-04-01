@@ -44,8 +44,8 @@ void PlotFinder(Int_t nEvents = 1000)
     tJets->SetBranchAddress("phi", &jetPhi);
 
     TH1* hDelta[3];
-    hDelta[0] = new TH1F("hDeltaPt", "", 150, 0, 150);
-    hDelta[1] = new TH1F("hDeltaEta", "", 20, -2, 2);
+    hDelta[0] = new TH1F("hDeltaPt", "", 101, 0, 101);
+    hDelta[1] = new TH1F("hDeltaEta", "", 21, -2, 2);
     hDelta[2] = new TH1F("hDeltaPhi", "", 35, 0, 3.5);
     TH1* hNJets = new TH1F("hNJets", "", 5, -0.5, 5.0);
 
@@ -69,7 +69,7 @@ void PlotFinder(Int_t nEvents = 1000)
             tJets->GetEntry(jetCounter++);
             hDelta[0]->Fill(abs(jetPt - 100));
             hDelta[1]->Fill(jetEta - eta);
-            hDelta[2]->Fill(jetPhi - phi);
+            hDelta[2]->Fill(EventModel::dphi(jetPhi, phi));
         }
     }
 
@@ -91,21 +91,25 @@ void PlotFinder(Int_t nEvents = 1000)
     jetCanvas->cd(1);
     hNJets->Draw();
     SetDrawOptions(hNJets, 32, (TString) "N_{jets} Per Event", (TString) "Counts");
+    hNJets->SetFillStyle(3003);
 
     // Delta pt
     jetCanvas->cd(2);
     hDelta[0]->Draw();
     SetDrawOptions(hDelta[0], 32, (TString) "#Delta pt", (TString) "dN/d#Delta pt");
+    hDelta[0]->SetFillStyle(3003);
 
     // delta eta
     jetCanvas->cd(3);
     hDelta[1]->Draw();
-    SetDrawOptions(hDelta[1], 32, (TString) "#Delta#eta", (TString) "");
+    SetDrawOptions(hDelta[1], 32, (TString) "#Delta#eta", (TString) "Counts");
+    hDelta[1]->SetFillStyle(3003);
 
     // delta phi
     jetCanvas->cd(4);
     hDelta[2]->Draw();
-    SetDrawOptions(hDeltaPt[2], 32, (TString) "#Delta#phi", (TString) "");
+    SetDrawOptions(hDelta[2], 32, (TString) "#Delta#phi", (TString) "Counts");
+    hDelta[2]->SetFillStyle(3003);
 
     /*
     TLegend * leg_dphi = new TLegend(0.6, 0.8, 0.9, 0.9);

@@ -44,7 +44,7 @@ void SetDrawOptions(Hist* h, Color_t col, TString x_label="", TString  y_label="
     }
     h->GetXaxis()->SetTitleSize(0.05);
     h->GetYaxis()->SetTitleOffset(1.2);
-    h->GetYaxis()->SetTitleSize(0.05);
+    h->GetYaxis()->SetTitleSize(0.04);
     h->GetXaxis()->CenterTitle();
     h->GetYaxis()->CenterTitle();
 }
