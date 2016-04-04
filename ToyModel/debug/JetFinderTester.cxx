@@ -12,27 +12,6 @@ void JetFinderTester(void) {
 
     /* Initializes jetFinder and creates the JetDefinition. */
     MyJetFinder* jetFinder = new MyJetFinder();
-
-    /* Fill the eventParticlesVector with candidates. */
-    jetFinder->EmbedJetsInEvent();
-
-    /* Fill event with some background particles. */
-    for (int i = 0; i < 1000; i++) {
-    	jetFinder->Generate("bkg");
-    }
-
-    /* Selects candidates based on eventClusterSequence. */
-    jetFinder->FindJetsInEvent();
-
-    /* Print out comparisons of what we expected to find and what we did find.*/
-    Int_t expectedNumJets 	= jetFinder->GetNumEmbed();
-    Int_t actualNumJets 	= jetFinder->GetNumJetsInEvent();
-    cout << "Test Results:\n"
-         << "expectedNumJets = " << expectedNumJets
-         << "\tactualNumJets = " <<  actualNumJets << endl;
-    jetFinder->PrintJetsInEvent();
-    jetFinder->Write("jetFinder.root");
-
 }
 
 

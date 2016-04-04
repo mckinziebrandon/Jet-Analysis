@@ -11,7 +11,8 @@ const int bkg = 2;
 
 // ---------- Constants ----------
 const Float_t pi    = TMath::Pi();
-const Int_t nBkg                = 100;
+const Int_t centrality = 0;
+//const Int_t nBkg                = 100;
 const Int_t nParticles			= 1000;
 const Int_t parton_mass         = 0;
 const Float_t sigmaDeltaPhi     = (pi / 4) / 2;
@@ -31,7 +32,7 @@ public:
     void GenerateParticle();
     /* Generate N number of particles of type STR, where STR can be either
        "trig" or "bkg" */
-    Float_t Generate(const string& str, Int_t n);
+    Float_t Generate(const string& str, Int_t n=1);
     /* Sample randomly from v2(pt)-modulated phi distribution. */ 
     Float_t GetPhi(Float_t pt);
     /* Returns phi value centered at pi from trigPhi with Gaussian spread. */ 
@@ -39,7 +40,7 @@ public:
     /* Returns random number b/w -1 and 1, corresponding to ALICE acceptance. */
     Float_t GetRandEta();
     /* Returns random sample from fits to raw data pt distribution. */
-    Double_t GetTrackPt(Float_t xMin=0.2);
+    Double_t GetTrackPt(Float_t xMin=0.6);
     /* Writes and organizes all model information into fileName.root. */
     void Write(TString fileName);
     /* Returns difference between inputs while constraining return value 

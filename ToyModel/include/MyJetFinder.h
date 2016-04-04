@@ -17,7 +17,7 @@ public:
     ~MyJetFinder();
     void        FindJets();
     void        GenerateParticle();
-    void        Generate(const string& str, Int_t n);
+    void        Generate(const string& str, Int_t n=1);
 	Int_t       GetNumJets();
     Double_t    GetTrackPt();
     void        PrintJetsInEvent();

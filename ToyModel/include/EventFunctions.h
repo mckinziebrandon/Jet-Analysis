@@ -33,7 +33,8 @@ private:
     TF1* InitfdNdPhi();
     /* Modified Boltzmann distribution with power law tail 
      * that yields (relative) particle multiplicity as a function 
-     * of pt. Extends to 200 GeV/c. Credit: Redmer */
+     * of pt. Extends to 100 GeV/c and begins around 0.55 GeV/c. 
+     * Credit: equation (3) in http://arxiv.org/pdf/1305.2627.pdf  */
     TF1* fTrackSpectrum;
     TF1* InitfTrackSpectrum();
 };

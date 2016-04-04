@@ -52,7 +52,7 @@ void ToyModel(Int_t nEvents = 1000) {
     	print(debugStr.Data(), i_event, nEvents);
 
         // Generate specified number/types of particles.
-        jetFinder->Generate("trig", 1);
+        jetFinder->Generate("trig");
         jetFinder->Generate("bkg", nBkg);
 
         // Use ClusterSequence to get store list of jets in this event.

@@ -11,7 +11,7 @@ ROOTCLING 	= `rootcling`
 FJETFLAGS 	= `fastjet-config --cxxflags --libs --plugins`
 
 DEPS= $(INCLUDE)/EventModel.h $(INCLUDE)/RootClasses.h  $(INCLUDE)/EventFunctions.h $(INCLUDE)/MyJetFinder.h
-OBJ1= JetFinderTester.so $(LIB)/EventModel.so $(LIB)/RootClasses.so $(LIB)/EventFunctions.so $(LIB)/MyJetFinder.so
+OBJ1= JetFinderTester.so $(LIB)/EventModel.so $(LIB)/EventFunctions.so $(LIB)/MyJetFinder.so
 
 %.so: %.cxx $(DEPS)
 	$(CXX) -c -o $@ $< $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS)

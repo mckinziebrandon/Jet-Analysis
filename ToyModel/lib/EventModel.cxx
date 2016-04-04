@@ -24,13 +24,11 @@ EventModel::EventModel()
 
     // TODO: Fit with fTrackSpectrum. Seems fine to leave out for now.
     // Fit CMS pt distribution and store in fExp().
-    /*
-    TFile* fileCMS = new TFile("/home/student/jet-radius-analysis/ToyModel/rootFiles/CMS_pt.root");
+    TFile*  fileCMS  = new TFile("/home/student/jet-radius-analysis/ToyModel/rootFiles/CMS_pt.root");
     TGraph* graphCMS = (TGraphAsymmErrors*) fileCMS->Get("ptDistribution;1");
     graphCMS->Fit(functions->GetfTrackSpectrum(), "RQ");
     delete graphCMS;
     delete fileCMS;
-    */
 
     // Initialize random number generator.
     rand = new TRandom3();
@@ -145,8 +143,7 @@ Float_t EventModel::GetRandEta() {
 
 /* Returns random pt from boltzmann probability distribution. */
 Double_t EventModel::GetTrackPt(Float_t xMin) { 
-    if (xMin == 0.2) return functions->GetfTrackSpectrum()->GetRandom();
-    return functions->GetfTrackSpectrum()->GetRandom(xMin, 200.0); 
+    return functions->GetfTrackSpectrum()->GetRandom(xMin, 100.0); 
 }
 
 
