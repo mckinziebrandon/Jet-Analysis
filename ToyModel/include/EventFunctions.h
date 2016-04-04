@@ -15,6 +15,7 @@ public:
     TF1* GetfLine();
     TF1* GetfdNdPhi();
     TF1* GetfTrackSpectrum();
+    TF1* GetfMult();
 private:
     /* Fitted function to v2(pt) in lower pt range where 
      * shape still appears polynomial [0., 6.]. */
@@ -37,6 +38,9 @@ private:
      * Credit: equation (3) in http://arxiv.org/pdf/1305.2627.pdf  */
     TF1* fTrackSpectrum;
     TF1* InitfTrackSpectrum();
+
+    TF1* fMult;
+    TF1* InitfMult();
 };
 #endif
 

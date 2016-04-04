@@ -9,7 +9,7 @@
 #include <iostream>
 #include <fstream>
 #include "./include/RootClasses.h"
-#include "./include/EventModel.h"
+#include "./include/EventGenerator.h"
 #include "./include/MyJetFinder.h"
 
 /* Print function that outputs if debug flag = true. */
@@ -33,6 +33,7 @@ void ToyModel(Int_t nEvents = 1000) {
      * ------------------------------------------------ */
 
     // Setup jetFinder.
+    EventGenerator* eventGenerator = new EventGenerator();
     MyJetFinder* jetFinder = new MyJetFinder();
     // Create file for object output tests.
     std::ofstream f_debug("./debug/debug_ToyModel.txt");
@@ -51,18 +52,28 @@ void ToyModel(Int_t nEvents = 1000) {
     	debugStr += " Percent Complete.";
     	print(debugStr.Data(), i_event, nEvents);
 
-        // Generate specified number/types of particles.
-        jetFinder->Generate("trig");
-        jetFinder->Generate("bkg", nBkg);
+        // Defined event centrality (and thus multiplicity);
+        eventGenerator->SetCentrality(5); 
+        debugStr = "\nGenerating ";
+        debugStr += eventGenerator->GetMultiplicity(); 
+        debugStr += " particles in event number ";
+        debugStr += i_event;
+        print(debugStr.Data(), i_event, nEvents);
 
+        // Generate specified number/types of particles.
+        eventGenerator->Generate("trig"); // Implement
+        eventGenerator->Generate("bkg", eventGenerator->GetMultiplicity()); // Implement
+
+        /*
         // Use ClusterSequence to get store list of jets in this event.
-        jetFinder->FindJets();
+        jetFinder->FindJets(eventGenerator);
         debugStr  = "Found ";
         debugStr += jetFinder->GetNumJets();
         debugStr += " jets in this event.";
         print(debugStr.Data(), i_event, nEvents);
 
         jetFinder->ResetEventVariables();
+        */
     }
 
     /* ------------------------------------------------ *
@@ -74,7 +85,8 @@ void ToyModel(Int_t nEvents = 1000) {
     TString fileName = "./rootFiles/ToyModel_";
     fileName += nEvents;
     fileName += ".root";
-    jetFinder->Write(fileName);
+    eventGenerator->Write(fileName);
+    //jetFinder->Write(fileName);
 }
 
 /* This main function is needed to compile via "make."

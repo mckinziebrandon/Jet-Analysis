@@ -1,59 +1,72 @@
-#include "../include/EventModel.h"
+#include "../include/EventGenerator.h"
 #include "../include/MyJetFinder.h"
 
 /*
- * In addition to constructing the general EventModel(),
+ * In addition to constructing the general EventGenerator(),
  * MyJetFinder creates TLorentzVectors that can interact with
  * the FastJet methods.
  */
-MyJetFinder::MyJetFinder() : EventModel() {
-    t_nJetReco = new TNtuple("t_nJetReco", "Number of jets in event", "n");
-    tJetReco= new TNtuple("tJetReco", "pt of reco jets in event", "pt:eta:phi");
+MyJetFinder::MyJetFinder() {
+    tNJets      = new TNtuple("tNJets", "Number of jets in event", "n");
+    tJetInfo    = new TNtuple("tJetInfo", "pt of reco jets in event", "pt:eta:phi");
     // Create jet definition. Should not change.
     jetDef = JetDefinition(antikt_algorithm, R);
 }
 
 /*
- * In addition to deleting ~EventModel(),
+ * In addition to deleting ~EventGenerator(),
  * delete all jet finder objects.
  */
 MyJetFinder::~MyJetFinder() {
 }
 
 /*
- * Depending on STR, generates a type of particle and places it in the parcticles
- * std::vector for analysis in fastjet.
+ * Cluster on particlesVector and create jetsVector.
  */
-void MyJetFinder::Generate(const string& str, Int_t n) {
-    // hi
-    pt = EventModel::Generate(str, n);
-    TLorentzVector vTemp;
-    vTemp.SetPtEtaPhiM(pt, eta, phi, 0.0);
-    PseudoJet jetTemp(vTemp.Px(), vTemp.Py(), vTemp.Pz(), vTemp.E());
-    particlesVector.push_back(jetTemp);
-
-    if (pt > trigPtThreshold) {
-    	// ---------- Jet ----------
-		tAssoc->GetEntry(tAssoc->GetEntries() - 1); // Get most recent associated particle. 
-		if (pt != 100.0) {
-			cout << "Associated particle pt != 100 in MyJetFinder::GenerateParticle()." << endl;
-        }
-		vTemp.SetPtEtaPhiM(pt, eta, phi, 0.0);
-		jetTemp = PseudoJet(vTemp.Px(), vTemp.Py(), vTemp.Pz(), vTemp.E());
-		particlesVector.push_back(jetTemp);
+void MyJetFinder::FindJets(EventGenerator* event) {
+    FillParticlesVector(event);
+    clusterSequence    = new ClusterSequence(particlesVector, jetDef);
+    jetsVector         = sorted_by_pt(clusterSequence->inclusive_jets(/*ptmin*/));
+    tNJets->Fill((Int_t) jetsVector.size());
+    for (Int_t i = 0; i < jetsVector.size(); i++) {
+    	tJetInfo->Fill(jetsVector[i].pt(), jetsVector[i].eta(), jetsVector[i].phi());
     }
 }
 
-/*
- * Cluster on particlesVector and create jetsVector.
- */
-void MyJetFinder::FindJets() {
-    clusterSequence    = new ClusterSequence(particlesVector, jetDef);
-    jetsVector         = sorted_by_pt(clusterSequence->inclusive_jets(/*ptmin*/));
-    t_nJetReco->Fill((Int_t) jetsVector.size());
-    for (Int_t i = 0; i < jetsVector.size(); i++) {
-    	tJetReco->Fill(jetsVector[i].pt(), jetsVector[i].eta(), jetsVector[i].phi());
+void MyJetFinder::FillParticlesVector(EventGenerator* eventGenerator) {
+    Float_t pt, eta, phi;
+    TTree* bkg = eventGenerator->GetBackground();
+    bkg->SetBranchAddress("pt", &pt);
+    bkg->SetBranchAddress("eta", &eta);
+    bkg->SetBranchAddress("phi", &phi);
+    Int_t mult = eventGenerator->GetMultiplicity();
+    Int_t bkgSize = bkg->GetEntries();
+    TLorentzVector vTemp;
+    for (int i = bkgSize - mult; i < bkgSize; i++) {
+        bkg->GetEntry(i);
+        vTemp.SetPtEtaPhiM(pt, eta, phi, 0.0);
+        PseudoJet jetTemp(vTemp.Px(), vTemp.Py(), vTemp.Pz(), vTemp.E());
+        particlesVector.push_back(jetTemp);
     }
+    delete bkg;
+    TTree* jet = eventGenerator->GetAssoc();
+    jet->SetBranchAddress("pt", &pt);
+    jet->SetBranchAddress("eta", &eta);
+    jet->SetBranchAddress("phi", &phi);
+    jet->GetEntry(jet->GetEntries()-1);
+    vTemp.SetPtEtaPhiM(pt, eta, phi, 0.0);
+    PseudoJet jetTemp(vTemp.Px(), vTemp.Py(), vTemp.Pz(), vTemp.E());
+    particlesVector.push_back(jetTemp);
+    delete jet;
+    TTree* trig = eventGenerator->GetTrig();
+    trig->SetBranchAddress("pt", &pt);
+    trig->SetBranchAddress("eta", &eta);
+    trig->SetBranchAddress("phi", &phi);
+    trig->GetEntry(trig->GetEntries()-1);
+    vTemp.SetPtEtaPhiM(pt, eta, phi, 0.0);
+    jetTemp = PseudoJet(vTemp.Px(), vTemp.Py(), vTemp.Pz(), vTemp.E());
+    particlesVector.push_back(jetTemp);
+    delete trig;
 }
 
 Int_t MyJetFinder::GetNumJets() {
@@ -89,18 +102,16 @@ void MyJetFinder::PrintJetsInEvent() {
 }
 
 /*
- * Places a jetPlots directory in the root file created by EventModel::Write().
+ * Places a jetPlots directory in the root file created by EventGenerator::Write().
  */
 void MyJetFinder::Write(TString fileName) {
-    EventModel::Write(fileName);
-
     TFile* jetFile = new TFile(fileName.Data(), "UPDATE");
 
     // _____ Store all plots from jet finder. _____
     TDirectory* jetDir = jetFile->mkdir("jetPlots");
     jetDir->cd();
-    jetDir->Add(t_nJetReco, true);
-    jetDir->Add(tJetReco, true);
+    jetDir->Add(tNJets, true);
+    jetDir->Add(tJetInfo, true);
 
     jetFile->Write();
     delete jetFile;

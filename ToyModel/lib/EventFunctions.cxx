@@ -1,4 +1,4 @@
-#include "../include/EventModel.h"
+#include "../include/EventGenerator.h"
 #include "../include/EventFunctions.h"
 
 EventFunctions::EventFunctions()
@@ -7,6 +7,7 @@ EventFunctions::EventFunctions()
     fLine           = (TF1*)InitfLine();
     fTrackSpectrum  = (TF1*)InitfTrackSpectrum();
     fdNdPhi         = (TF1*)InitfdNdPhi();
+    fMult           = (TF1*)InitfMult();
 }
 
 EventFunctions::~EventFunctions() 
@@ -15,6 +16,7 @@ EventFunctions::~EventFunctions()
     delete fLine;
     delete fTrackSpectrum;
     delete fdNdPhi;
+    delete fMult;
 }
 
 // Getters. -----------------------------------------------------
@@ -22,6 +24,7 @@ TF1* EventFunctions::GetfPolynomial()       { return fPolynomial; }
 TF1* EventFunctions::GetfLine()             { return fLine; }
 TF1* EventFunctions::GetfTrackSpectrum()    { return fTrackSpectrum; }
 TF1* EventFunctions::GetfdNdPhi()           { return fdNdPhi; }
+TF1* EventFunctions::GetfMult()             { return fMult; }
 //---------------------------------------------------------------
 
 // -------------------------------------------------------------------------------------
@@ -52,6 +55,12 @@ TF1* EventFunctions::InitfTrackSpectrum ()
     f->SetParameters(2434401791.20528, 2.98507, 10069622.25117, 5.50000, 2.80000, 0.20000);
     return f;
     */
+}
+
+TF1* EventFunctions::InitfMult() {
+    TF1* f = new TF1("fMult", "[0] * expo(1)", 0., 100.);
+    f->SetParameters(1, 1, -1);
+    return f;
 }
 
 TF1* EventFunctions::InitfdNdPhi() 
