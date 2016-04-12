@@ -1,5 +1,6 @@
 #include "../include/EventGenerator.h"
 #include "../include/EventFunctions.h"
+#include "TSpline.h"
 
 /************************************
 * Default EventGenerator Constructor.   *
@@ -32,7 +33,7 @@ EventGenerator::EventGenerator()
     //
     TFile * multFile = new TFile("/home/student/jet-radius-analysis/ToyModel/rootFiles/Multiplicity.root");
     TGraph* gMult = (TGraphAsymmErrors*) multFile->Get("multiplicity;1");
-    gMult->Fit(functions->GetfMult(), "RQ");
+    spline = new TSpline3("spline", gMult);
     delete gMult;
     delete multFile;
 
@@ -69,17 +70,16 @@ void EventGenerator::Write(TString fileName) {
     functionDir->Add(functions->GetfLine(), true);
     functionDir->Add(functions->GetfTrackSpectrum(), true);
     functionDir->Add(functions->GetfdNdPhi(), true);
-    functionDir->Add(functions->GetfMult(), true);
 
     topFile->Write();
     delete topFile;
 }
 
 Float_t EventGenerator::Generate(const string& str, Int_t n) {
+    eta = GetRandEta();
     if (str == "bkg") {
         for (Int_t i = 0; i < n; i++) {
             pt  = GetTrackPt();
-            eta = GetRandEta();
             phi = GetPhi(pt);
             tBkg->Fill();
         }
@@ -87,7 +87,6 @@ Float_t EventGenerator::Generate(const string& str, Int_t n) {
 	} else if (str == "trig") {
         // Create the trigger particle. 
         pt  = GetTrackPt(trigPtThreshold);
-        eta = GetRandEta();
         phi = GetPhi(pt);
         tTrig->Fill();
         Float_t res = pt;
@@ -97,11 +96,59 @@ Float_t EventGenerator::Generate(const string& str, Int_t n) {
     	phi = GetAssocPhi(phi);
     	tAssoc->Fill();
         return res;
-    } else {
+    } else if (str == "hJet") {
+        /*
+        Pythia pythia;
+        pythia.readString("Beams:eCM = 8000.");
+        pythia.readString("HardQCD:all = on");
+        pythia.readString("PhaseSpace:pTHatMin = 20."); 
+        pythia.init();
+        // Begin event loop. Generate event. Skip if error. List first one.
+        for (int iEvent = 0; iEvent < 100; ++iEvent) {
+            if (!pythia.next()) continue;
+            // Find number of all final charged particles and fill histogram.
+            int nCharged = 0;
+            for (int i = 0; i < pythia.event.size(); ++i) {
+                if (pythia.event[i].isFinal() && pythia.event[i].isCharged())
+                    ++nCharged;
+            }
+            //mult.fill( nCharged );
+        }
+        */
+        cout << "doing nothing...sry" << endl;
+    }else {
         std::cout << "Error: EventGenerator::Generate() called with bad str." << std::endl;
         return -1;
     }
 }
+
+// 
+vector<PseudoJet> EventGenerator::GetLastEvent() {
+    vector<PseudoJet> res;
+    // Initialize entry index to first background particle in most recent event. 
+    Int_t entry = tBkg->GetEntries() - multiplicity;
+    // Loop over all background particles in most recent event and store as PseudoJets in res.
+    while (entry++ < tBkg->GetEntries()) {
+        tBkg->GetEntry(entry);
+        res.push_back(GetPseudoJet());
+    }
+    // Place most recent associated particle (forced to be always one) in res.
+    tAssoc->GetEntry(tAssoc->GetEntries()-1);
+    res.push_back(GetPseudoJet());
+    // Place most recent trigger particle in res.
+    tTrig->GetEntry(tTrig->GetEntries()-1);
+    res.push_back(GetPseudoJet());
+    return res;
+}
+
+/* Returns current values of pt, eta, phi wrapped in a PseudoJet. */
+PseudoJet EventGenerator::GetPseudoJet() {
+    TLorentzVector tlvTemp;
+    tlvTemp.SetPtEtaPhiM(pt, eta, phi, 0.0);
+    PseudoJet jetTemp(tlvTemp.Px(), tlvTemp.Py(), tlvTemp.Pz(), tlvTemp.E());
+    return jetTemp;
+}
+
 /****************************************************
 * Returns random value of phi that depends on       *
 * the value of v2(pt) input parameter for dN/dPhi.  *
@@ -155,7 +202,7 @@ Double_t EventGenerator::GetTrackPt(Float_t xMin) {
 
 void EventGenerator::SetCentrality(int percent) {
     percentCentrality = percent;
-    multiplicity = functions->GetfMult()->Eval(percent);
+    multiplicity = spline->Eval(percent);
 }
 
 Float_t EventGenerator::GetMultiplicity() {

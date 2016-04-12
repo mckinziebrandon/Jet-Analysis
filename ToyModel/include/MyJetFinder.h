@@ -15,11 +15,11 @@ class MyJetFinder {
     public:
         MyJetFinder();
         ~MyJetFinder();
-        void        FindJets(EventGenerator*);
-        Int_t       GetNumJets();
-        void        PrintJetsInEvent();
-        void        ResetEventVariables();
-        void        Write(TString fileName);
+        void    FindJets(vector<PseudoJet> event);
+        Int_t   GetNumJets();
+        void    PrintJets();
+        void    Clear();
+        void    Write(TString fileName);
     private:
         /* jetDef contains a full specification of _how_ to carry out
          * the clustering. For now, only specify anti-kt algorithm and
@@ -34,7 +34,6 @@ class MyJetFinder {
         vector<PseudoJet> 	particlesVector;
         /* Store vector of PseudoJets built by FastJet during clustering procedure. */
         vector<PseudoJet> 	jetsVector;
-        void FillParticlesVector(EventGenerator* event);
 };
 
 #endif

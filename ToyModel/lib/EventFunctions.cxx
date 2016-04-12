@@ -58,7 +58,7 @@ TF1* EventFunctions::InitfTrackSpectrum ()
 }
 
 TF1* EventFunctions::InitfMult() {
-    TF1* f = new TF1("fMult", "[0] * expo(1)", 0., 100.);
+    TF1* f = new TF1("fMult", "[0] * expo(1)", 4., 100.);
     f->SetParameters(1, 1, -1);
     return f;
 }

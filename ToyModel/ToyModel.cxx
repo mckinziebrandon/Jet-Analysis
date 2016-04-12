@@ -13,13 +13,15 @@
 #include "./include/MyJetFinder.h"
 
 /* Print function that outputs if debug flag = true. */
-Bool_t debug = false;
+bool debug = false;
 TString debugStr;
-void print(const char* str, Int_t i_event, Int_t nEvents) {
+bool print(const char* str, Int_t i_event, Int_t nEvents) {
 	Bool_t fivePercentInterval = (i_event % (nEvents / 20) == 0);
 	if (debug && fivePercentInterval) {
 		cout << str << endl;
+        return true;
 	}
+    return false;
 }
 
 // ---------------------------------------------------------------------------------
@@ -47,33 +49,29 @@ void ToyModel(Int_t nEvents = 1000) {
     for (Int_t i_event = 0; i_event < nEvents; i_event++) {
 
     	// Print progress updates.
-    	debugStr = "\n";
+        debugStr = "";
     	debugStr += (Float_t)(i_event * 100)/nEvents;
     	debugStr += " Percent Complete.";
     	print(debugStr.Data(), i_event, nEvents);
 
         // Defined event centrality (and thus multiplicity);
-        eventGenerator->SetCentrality(5); 
-        debugStr = "\nGenerating ";
+        eventGenerator->SetCentrality(40); 
+        debugStr = "\tNumber of particles generated: ";
         debugStr += eventGenerator->GetMultiplicity(); 
-        debugStr += " particles in event number ";
-        debugStr += i_event;
         print(debugStr.Data(), i_event, nEvents);
 
         // Generate specified number/types of particles.
-        eventGenerator->Generate("trig"); // Implement
-        eventGenerator->Generate("bkg", eventGenerator->GetMultiplicity()); // Implement
+        eventGenerator->Generate("trig"); 
+        //eventGenerator->Generate("hJet"); // Pythia hard scattering
+        eventGenerator->Generate("bkg", eventGenerator->GetMultiplicity()); 
 
-        /*
         // Use ClusterSequence to get store list of jets in this event.
-        jetFinder->FindJets(eventGenerator);
-        debugStr  = "Found ";
+        jetFinder->FindJets(eventGenerator->GetLastEvent());
+        debugStr  = "\tNumber of jets found: ";
         debugStr += jetFinder->GetNumJets();
-        debugStr += " jets in this event.";
         print(debugStr.Data(), i_event, nEvents);
 
-        jetFinder->ResetEventVariables();
-        */
+        jetFinder->Clear();
     }
 
     /* ------------------------------------------------ *
@@ -85,8 +83,9 @@ void ToyModel(Int_t nEvents = 1000) {
     TString fileName = "./rootFiles/ToyModel_";
     fileName += nEvents;
     fileName += ".root";
+    cout << "Writing data to " << fileName.Data();
     eventGenerator->Write(fileName);
-    //jetFinder->Write(fileName);
+    jetFinder->Write(fileName);
 }
 
 /* This main function is needed to compile via "make."

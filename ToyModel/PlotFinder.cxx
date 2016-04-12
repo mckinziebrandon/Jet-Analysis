@@ -1,13 +1,13 @@
 /********************************************************************************************
 * Filename:     PlotFinder.cxx
-* Date Created: January 28, 2016                                                            *
+* Date Created: April 1, 2016                                                            *
 * Author:       Brandon McKinzie                                                            *
 * Description:           *
 ********************************************************************************************/
 #include <iostream>
 #include <fstream>
 #include <cassert>
-#include "./include/EventModel.h"
+#include "./include/EventGenerator.h"
 
 // --------------------------------------------------------------------------------------------
 void PlotFinder(Int_t nEvents = 1000)
@@ -36,8 +36,8 @@ void PlotFinder(Int_t nEvents = 1000)
     tAssoc->SetBranchAddress("pt", &pt);
 
     // Per-event jet information.
-    TTree* tNJets = (TTree*) dirJets->Get("t_nJetReco;1");
-    TTree* tJets= (TTree*) dirJets->Get("tJetReco;1");
+    TTree* tNJets = (TTree*) dirJets->Get("tNJets;1");
+    TTree* tJets= (TTree*) dirJets->Get("tJetInfo;1");
     tNJets->SetBranchAddress("n", &nJets);
     tJets->SetBranchAddress("pt", &jetPt);
     tJets->SetBranchAddress("eta", &jetEta);
@@ -47,7 +47,9 @@ void PlotFinder(Int_t nEvents = 1000)
     hDelta[0] = new TH1F("hDeltaPt", "", 101, 0, 101);
     hDelta[1] = new TH1F("hDeltaEta", "", 21, -2, 2);
     hDelta[2] = new TH1F("hDeltaPhi", "", 35, 0, 3.5);
-    TH1* hNJets = new TH1F("hNJets", "", 5, -0.5, 5.0);
+    TH1* hNJets = new TH1F("hNJets", "", 10, -0.5, 5.0);
+    hNJets->SetBit(TH1::kCanRebin);
+    hDelta[0]->SetBit(TH1::kCanRebin);
 
     /* ---------------------------------------------------- *
      * Data Processing.                                     *
@@ -67,9 +69,9 @@ void PlotFinder(Int_t nEvents = 1000)
 
         for (int i = 0; i < (int) nJets; i++) {
             tJets->GetEntry(jetCounter++);
-            hDelta[0]->Fill(abs(jetPt - 100));
+            hDelta[0]->Fill(jetPt - 100);
             hDelta[1]->Fill(jetEta - eta);
-            hDelta[2]->Fill(EventModel::dphi(jetPhi, phi));
+            hDelta[2]->Fill(EventGenerator::dphi(jetPhi, phi));
         }
     }
 
@@ -94,9 +96,10 @@ void PlotFinder(Int_t nEvents = 1000)
     hNJets->SetFillStyle(3003);
 
     // Delta pt
+    jetCanvas->cd(2)->SetLogy(1);
     jetCanvas->cd(2);
     hDelta[0]->Draw();
-    SetDrawOptions(hDelta[0], 32, (TString) "#Delta pt", (TString) "dN/d#Delta pt");
+    SetDrawOptions(hDelta[0], 32, (TString) "#Delta pt (reconstructed - embedded)", (TString) "dN/d#Delta pt");
     hDelta[0]->SetFillStyle(3003);
 
     // delta eta

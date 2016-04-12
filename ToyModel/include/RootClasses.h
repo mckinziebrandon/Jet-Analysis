@@ -29,6 +29,8 @@ using namespace std;
 #include "TString.h"
 #include "TTree.h"
 
+const Color_t colors[] = {30, 40, 45, 49};
+
 template<typename Hist>
 void SetDrawOptions(Hist* h, Color_t col, TString x_label="", TString  y_label="") {
     h->SetStats(0);
@@ -49,16 +51,6 @@ void SetDrawOptions(Hist* h, Color_t col, TString x_label="", TString  y_label="
     h->GetYaxis()->CenterTitle();
 }
 
-// Draws histogram in its own canvas and sets personal drawing options. 
-template<typename Hist>
-TCanvas* DrawHistogram(Hist* h)
-{
-    TCanvas* c = new TCanvas("c", "canvas from DrawHistogram", 700, 500);
-    c->cd();
-    h->Draw();
-    TString x = h->GetXaxis()->GetTitle();
-    TString y = h->GetYaxis()->GetTitle();
-    return c;
-}
+
 
 #endif
