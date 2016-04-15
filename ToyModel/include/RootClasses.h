@@ -29,7 +29,7 @@ using namespace std;
 #include "TString.h"
 #include "TTree.h"
 
-const Color_t colors[] = {30, 40, 45, 49};
+const Color_t colors[] = {36, 32, 45, 49};
 
 template<typename Hist>
 void SetDrawOptions(Hist* h, Color_t col, TString x_label="", TString  y_label="") {

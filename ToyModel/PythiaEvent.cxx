@@ -15,6 +15,8 @@ void PythiaEvent() {
     pythia.readString("PhaseSpace:pTHatMin = 10."); 
     pythia.init();
 
+    TH1* hNTrig = new TH1F("hNTrig", "Number of high-pt Pythia objects per event", 20, 0.0, 20.0);
+
     // Begin event loop. Generate event. Skip if error. List first one.
     for (int iEvent = 0; iEvent < 10; ++iEvent) {
         if (!pythia.next()) continue;
@@ -29,6 +31,13 @@ void PythiaEvent() {
         cout << "NUMBER OF TRIGGER PARTICLES = " << nTrig << endl;
     }
     pythia.stat();
+
+    fileName = "./rootFiles/PythiaEvent.root";
+    TFile* outFile = new TFile(fileName.Data, "UPDATE");
+    outFile->cd();
+    hNTrig->Write();
+    outFile->Close();
+
 }
 
 

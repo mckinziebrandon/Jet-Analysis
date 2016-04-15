@@ -13,7 +13,7 @@
   double p7937_d1x1y1_ystatplus[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
   int p7937_d1x1y1_numpoints = 9;
   p7937_d1x1y1 = TGraphAsymmErrors(p7937_d1x1y1_numpoints, p7937_d1x1y1_xval, p7937_d1x1y1_yval, p7937_d1x1y1_xerrminus, p7937_d1x1y1_xerrplus, p7937_d1x1y1_yerrminus, p7937_d1x1y1_yerrplus);
-  p7937_d1x1y1.SetName("/HepData/7937/d1x1y1");
+  p7937_d1x1y1.SetName("multiplicity");
   p7937_d1x1y1.SetTitle("/HepData/7937/d1x1y1");
   p7937_d1x1y1.Draw("AP");
 
