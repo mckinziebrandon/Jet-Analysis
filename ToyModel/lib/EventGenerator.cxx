@@ -1,13 +1,12 @@
 #include "../include/EventGenerator.h"
-#include "../include/EventFunctions.h"
-#include "TSpline.h"
+//#include "../include/EventFunctions.h"
+//#include "TSpline.h"
 
 /************************************
 * Default EventGenerator Constructor.   *
 * Initializes all instance objects. *
 *************************************/
-EventGenerator::EventGenerator()
-{    
+EventGenerator::EventGenerator() {    
     tTrig  = (TTree*)InitializeTrigger();
     tAssoc = (TTree*)InitializeAssoc();
     tBkg   = (TTree*)InitializeBackground();
@@ -24,11 +23,11 @@ EventGenerator::EventGenerator()
     delete file_v2;
 
     //
-    TFile*  fileCMS  = new TFile("/home/student/jet-radius-analysis/ToyModel/rootFiles/CMS_pt.root");
-    TGraph* graphCMS = (TGraphAsymmErrors*) fileCMS->Get("ptDistribution;1");
-    graphCMS->Fit(functions->GetfTrackSpectrum(), "RQ");
-    delete graphCMS;
-    delete fileCMS;
+    TFile*  fileALICE  = new TFile("/home/student/jet-radius-analysis/ToyModel/rootFiles/ALICE_pt.root");
+    TGraph* graphALICE = (TGraphAsymmErrors*) fileALICE->Get("ptDistribution;1");
+    graphALICE->Fit(functions->GetfTrackSpectrum(), "RQ");
+    delete graphALICE;
+    delete fileALICE;
 
     //
     TFile * multFile = new TFile("/home/student/jet-radius-analysis/ToyModel/rootFiles/Multiplicity.root");
@@ -76,28 +75,32 @@ void EventGenerator::Write(TString fileName) {
 }
 
 Float_t EventGenerator::Generate(const string& str, Int_t n) {
-    eta = GetRandEta();
+    Printer::print("Entering EventGenerator::Generate");
     if (str == "bkg") {
+        Printer::print("\tBeginning background particle construction . . .");
         for (Int_t i = 0; i < n; i++) {
-            pt  = GetTrackPt();
+            eta = GetRandEta();
+            pt  = GetTrackPt(ptMin);
             phi = GetPhi(pt);
             tBkg->Fill();
         }
         return pt;
 	} else if (str == "trig") {
         // Create the trigger particle. 
+        eta = GetRandEta();
         pt  = GetTrackPt(trigPtThreshold);
         phi = GetPhi(pt);
         tTrig->Fill();
         Float_t res = pt;
         // Create its associated particle.
-        pt = 100.0;
+        pt = ptMax;
     	eta = -eta;
     	phi = GetAssocPhi(phi);
     	tAssoc->Fill();
         return res;
     } else if (str == "hJet") {
         /*
+        Need to find this code a new home :(
         Pythia pythia;
         pythia.readString("Beams:eCM = 8000.");
         pythia.readString("HardQCD:all = on");
@@ -197,8 +200,11 @@ Float_t EventGenerator::GetRandEta() {
 
 /* Returns random pt from boltzmann probability distribution. */
 Double_t EventGenerator::GetTrackPt(Float_t xMin) { 
-    return functions->GetfTrackSpectrum()->GetRandom(xMin, 100.0); 
+    Printer::print("\t\tEntering EventGenerator::GetTrackPt with pT = ", xMin);
+    return functions->GetfTrackSpectrum()->GetRandom(xMin, 20.0); 
 }
+
+
 
 void EventGenerator::SetCentrality(int percent) {
     percentCentrality = percent;

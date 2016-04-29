@@ -3,6 +3,7 @@
 // User-defined headers.
 #include "RootClasses.h"
 #include "EventFunctions.h"
+#include "Printer.h"
 // C++ headers.
 #include <string>
 #include <vector>
@@ -14,6 +15,8 @@ using namespace fastjet;
 using namespace Pythia8; // new
 
 // ---------- Constants ----------
+const Float_t ptMin = 0.325;
+const Float_t ptMax = 20.0;
 const Float_t sigmaDeltaPhi = (pi / 4) / 2;
 const Float_t trigPtThreshold = 5.0;
 // -------------------------------
@@ -26,6 +29,7 @@ class EventGenerator {
         /* Generate N number of particles of type STR, where STR can be either
            "trig" or "bkg" */
         Float_t Generate(const string& str, Int_t n=1);
+
         /* ---------------------------------------------------------------- *
          * Getters                                                          *
          * ---------------------------------------------------------------- */
@@ -38,11 +42,8 @@ class EventGenerator {
         Float_t GetPhi(Float_t pt);
         /* Returns random number b/w -1 and 1, corresponding to ALICE acceptance. */
         Float_t GetRandEta();
-        /* Returns random sample from fits to raw data pt distribution. */
-        TTree* GetAssoc()       {return (TTree*) tAssoc->CloneTree();}
-        TTree* GetBackground()  {return (TTree*) tBkg->CloneTree();}
-        TTree* GetTrig()        {return (TTree*) tTrig->CloneTree();}
-        Double_t GetTrackPt(Float_t xMin=0.6);
+        Double_t GetTrackPt(Float_t xMin=ptMin);
+
         /* ---------------------------------------------------------------- *
          * Setters                                                          *
          * ---------------------------------------------------------------- */
@@ -53,6 +54,7 @@ class EventGenerator {
         /* Returns difference between inputs while constraining return value 
          * to be in [0., 2. * pi]; */
         static Float_t dphi(Float_t p, Float_t p2);
+
     protected:
         /* ---------------------------------------------------------------- *
          * Data Containers                                                  *
@@ -63,6 +65,7 @@ class EventGenerator {
         TTree* tAssoc;
         TTree* tBkg;
         TSpline* spline;
+
         /* ---------------------------------------------------------------- *
          * Helper Objects                                                   *
          * ---------------------------------------------------------------- */
@@ -71,6 +74,7 @@ class EventGenerator {
         /* The 'functions' variable has access to all sampling distributions the user
          * may wish to use/access throughout the model. */
         EventFunctions* functions;
+
         /* ---------------------------------------------------------------- *
          * Private Methods                                                  *
          * ---------------------------------------------------------------- */

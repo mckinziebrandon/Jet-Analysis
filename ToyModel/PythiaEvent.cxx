@@ -32,8 +32,8 @@ void PythiaEvent() {
     }
     pythia.stat();
 
-    fileName = "./rootFiles/PythiaEvent.root";
-    TFile* outFile = new TFile(fileName.Data, "UPDATE");
+    TString fileName = "./rootFiles/PythiaEvent.root";
+    TFile* outFile = new TFile(fileName.Data(), "RECREATE");
     outFile->cd();
     hNTrig->Write();
     outFile->Close();

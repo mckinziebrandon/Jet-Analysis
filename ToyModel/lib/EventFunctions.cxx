@@ -41,20 +41,9 @@ TF1* EventFunctions::InitfLine() {
 
 TF1* EventFunctions::InitfTrackSpectrum () 
 {
-    TF1* f = new TF1("fspectrum", "[0] * TMath::Power(1 + x / [1], -[2])", 0., 100.);
-    f->SetParameters(1, 1, 1);
+    TF1* f = new TF1("fspectrum", "[0] * TMath::Power(1 + x / [1], -[2])", ptMin, ptMax);
+    f->SetParameters(1.0, 1.0, 5.0); // 5.0 is based on experimentally determined values. KEEP. 
     return f;
-    /*
-    TString funcString = "[0] * (TMath::Power([1], 2) * x * TMath::Exp(-[1]*x))";
-    funcString += " + (x>1) * [2]";
-    funcString += " * (1.17676e-01 * TMath::Sqrt(0.1396*0.1396+x*x)";
-    funcString += " * TMath::Power(1. + 1./ [3] / 8.21795e-01";
-    funcString += " * TMath::Sqrt(0.1396*0.1396+x*x), -1. * [3]))";
-    funcString += " * (1 / ( 1 + TMath::Exp( -(x - [4]) / [5] )))";
-    TF1* f = new TF1("fspectrum", funcString.Data(), .2, 200.);
-    f->SetParameters(2434401791.20528, 2.98507, 10069622.25117, 5.50000, 2.80000, 0.20000);
-    return f;
-    */
 }
 
 TF1* EventFunctions::InitfMult() {
