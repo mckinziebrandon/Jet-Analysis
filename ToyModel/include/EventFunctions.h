@@ -1,6 +1,5 @@
 #ifndef EVENTFUNCTIONS_H
 #define EVENTFUNCTIONS_H
-#include "RootClasses.h"
 
 class EventFunctions 
 {

@@ -1,43 +1,44 @@
+#include "../include/EventFunctions.h"
 #include "../include/EventGenerator.h"
-//#include "../include/EventFunctions.h"
-//#include "TSpline.h"
 
 /************************************
 * Default EventGenerator Constructor.   *
 * Initializes all instance objects. *
 *************************************/
 EventGenerator::EventGenerator() {    
-    tTrig  = (TTree*)InitializeTrigger();
-    tAssoc = (TTree*)InitializeAssoc();
-    tBkg   = (TTree*)InitializeBackground();
+    std::string PATH = "/home/student/jet-radius-analysis/";
 
-    // Initialize all functions.
+    // ----- Initialize all instance variables. -----
+    rand    = new TRandom3();
+    tTrig   = (TTree*)InitializeTrigger();
+    tAssoc  = (TTree*)InitializeAssoc();
+    tBkg    = (TTree*)InitializeBackground();
     functions = new EventFunctions();
+    // TODO: correct way to get multiplicity??
+    //multiplicity = 1.6 * 2.0 * pi * functions->GetfTrackSpectrum()->Integral(0.5, 20.0);
 
-    // Fit ALICE data and store in fPolynomial and fLine.
-    TFile* file_v2 = new TFile("/home/student/jet-radius-analysis/ToyModel/rootFiles/ALICE_v2pt.root");
+    // ----- Store fits to all desired distributions inside the functions variable. -----
+
+    // 1. Get efficiency 4d histogram. 
+    TFile* fEff = new TFile((PATH + "TaskBrandon/correction_2010_aod162_hybrid.root").data(), "READ");
+    hEff = (THnD*) fEff->Get("correction;1");
+    PATH += "ToyModel/rootFiles/";
+
+    // 2. Fit ALICE data and store in fPolynomial and fLine.
+    TFile* file_v2 = new TFile((PATH + "ALICE_v2pt.root").data());
     TGraph* g = (TGraphAsymmErrors*) file_v2->Get("v2Plot_2;1");
     g->Fit(functions->GetfPolynomial(), "RQ");
     g->Fit(functions->GetfLine(), "RQ+");
-    delete g;
-    delete file_v2;
 
-    //
-    TFile*  fileALICE  = new TFile("/home/student/jet-radius-analysis/ToyModel/rootFiles/ALICE_pt.root");
+    // 3. Get pt distribution.
+    TFile*  fileALICE  = new TFile((PATH + "ALICE_pt.root").data());
     TGraph* graphALICE = (TGraphAsymmErrors*) fileALICE->Get("ptDistribution;1");
     graphALICE->Fit(functions->GetfTrackSpectrum(), "RQ");
-    delete graphALICE;
-    delete fileALICE;
 
-    //
-    TFile * multFile = new TFile("/home/student/jet-radius-analysis/ToyModel/rootFiles/Multiplicity.root");
+    // 4. Get multiplicity vs. centrality distribution. 
+    TFile * multFile = new TFile((PATH + "Multiplicity.root").data());
     TGraph* gMult = (TGraphAsymmErrors*) multFile->Get("multiplicity;1");
     spline = new TSpline3("spline", gMult);
-    delete gMult;
-    delete multFile;
-
-    // Initialize random number generator.
-    rand = new TRandom3();
 }
 
 /************************************
@@ -74,15 +75,34 @@ void EventGenerator::Write(TString fileName) {
     delete topFile;
 }
 
+Float_t EventGenerator::GetEfficiency() {
+    Int_t effVars[4];
+    effVars[0]  = hEff->GetAxis(0)->FindBin(eta);
+    effVars[1]  = hEff->GetAxis(1)->FindBin(pt); 
+    effVars[2]  = hEff->GetAxis(2)->FindBin(rand->Uniform(5.0));   // random centrality.
+    effVars[3]  = hEff->GetAxis(3)->FindBin(0.0);           // ok to fix zVtx to 0.0?
+    Float_t res = 1.0 / (Float_t) hEff->GetBinContent(effVars);    
+    if (res > 1.0) {
+        throw "Error: efficiency value must be <= 1";
+    }
+    return res;
+}
+
 Float_t EventGenerator::Generate(const string& str, Int_t n) {
     Printer::print("Entering EventGenerator::Generate");
+    recoMult = 0;
     if (str == "bkg") {
         Printer::print("\tBeginning background particle construction . . .");
         for (Int_t i = 0; i < n; i++) {
             eta = GetRandEta();
             pt  = GetTrackPt(ptMin);
             phi = GetPhi(pt);
-            tBkg->Fill();
+            // Fill track tree probabalistically based on efficiency. 
+            // Needs to be done track-by-track since Eff is function of track properties.
+            if (rand->Rndm() < GetEfficiency()) {
+                tBkg->Fill();
+                recoMult++;
+            }
         }
         return pt;
 	} else if (str == "trig") {
@@ -98,28 +118,7 @@ Float_t EventGenerator::Generate(const string& str, Int_t n) {
     	phi = GetAssocPhi(phi);
     	tAssoc->Fill();
         return res;
-    } else if (str == "hJet") {
-        /*
-        Need to find this code a new home :(
-        Pythia pythia;
-        pythia.readString("Beams:eCM = 8000.");
-        pythia.readString("HardQCD:all = on");
-        pythia.readString("PhaseSpace:pTHatMin = 20."); 
-        pythia.init();
-        // Begin event loop. Generate event. Skip if error. List first one.
-        for (int iEvent = 0; iEvent < 100; ++iEvent) {
-            if (!pythia.next()) continue;
-            // Find number of all final charged particles and fill histogram.
-            int nCharged = 0;
-            for (int i = 0; i < pythia.event.size(); ++i) {
-                if (pythia.event[i].isFinal() && pythia.event[i].isCharged())
-                    ++nCharged;
-            }
-            //mult.fill( nCharged );
-        }
-        */
-        cout << "doing nothing...sry" << endl;
-    }else {
+    } else {
         std::cout << "Error: EventGenerator::Generate() called with bad str." << std::endl;
         return -1;
     }
@@ -168,12 +167,9 @@ Float_t EventGenerator::GetPhi(Float_t pt) {
 * centered at pi from the trigger particle.                                     *
 *********************************************************************************/
 Float_t EventGenerator::GetAssocPhi(Float_t trigPhi) {
-    // Setup. 
-    Float_t mu, result;
-
     // Get the average phi, centered at pi w.r.t. the trigger.
-    mu  = trigPhi + pi;
-    result = (Float_t) rand->Gaus(mu, sigmaDeltaPhi);
+    const Float_t mu = trigPhi + pi;
+    Float_t result = (Float_t) rand->Gaus(mu, sigmaDeltaPhi);
     if (result > 2 * pi) {
         result -= 2 * pi;
     } else if (result < 0.0) {
@@ -188,7 +184,7 @@ Float_t EventGenerator::GetAssocPhi(Float_t trigPhi) {
 *****************************************************/
 Float_t EventGenerator::dphi(Float_t phi1, Float_t phi2) 
 {
-    Float_t dphi    = phi1 - phi2;
+    Float_t dphi = phi1 - phi2;
     if (dphi < 0) return dphi + 2 * pi;
     return dphi;
 }
@@ -207,12 +203,16 @@ Double_t EventGenerator::GetTrackPt(Float_t xMin) {
 
 
 void EventGenerator::SetCentrality(int percent) {
-    percentCentrality = percent;
+    centrality = percent;
     multiplicity = spline->Eval(percent);
 }
 
 Float_t EventGenerator::GetMultiplicity() {
     return multiplicity;
+}
+
+Int_t EventGenerator::GetRecoMult() {
+    return recoMult;
 }
 
 /*===============================================================================

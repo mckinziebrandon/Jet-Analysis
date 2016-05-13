@@ -10,16 +10,13 @@
 #include <fstream>
 #include "./include/RootClasses.h"
 #include "./include/EventGenerator.h"
+#include "./include/EventFunctions.h"
+#include "./include/Printer.h"
 #include "./include/MyJetFinder.h"
-//#include "./include/Printer.h"
-
-TString debugStr;
 
 // ---------------------------------------------------------------------------------
 void ToyModel(Int_t nEvents = 1000) {
-
     using std::cout;
-    using std::flush;
 
     /* ------------------------------------------------ *
      * Object Declarations.            					*
@@ -28,8 +25,6 @@ void ToyModel(Int_t nEvents = 1000) {
     // Setup jetFinder.
     EventGenerator* eventGenerator = new EventGenerator();
     MyJetFinder* jetFinder = new MyJetFinder();
-    // Create file for object output tests.
-    std::ofstream f_debug("./debug/debug_ToyModel.txt");
 
     /* ------------------------------------------------ *
      * Data Generation/Simulation.                   	*
@@ -38,29 +33,22 @@ void ToyModel(Int_t nEvents = 1000) {
     cout << "Beginning ToyModel simulation of " << nEvents << " events." << endl;
     // Simulate nEvents with randomly generated tracks. 
     for (Int_t i_event = 0; i_event < nEvents; i_event++) {
-
     	// Print progress updates.
-        debugStr = "";
-    	debugStr += (Float_t)(i_event * 100)/nEvents;
-    	debugStr += " Percent Complete.";
-        Printer::print(debugStr.Data(), i_event, nEvents);
+        if (i_event % (nEvents / 20) == 0) {
+            Printer::print("Percent Complete: ", i_event * 100 / nEvents);
+        }
 
         // Defined event centrality (and thus multiplicity);
-        eventGenerator->SetCentrality(2.5); 
-        debugStr = "\tNumber of particles generated: ";
-        debugStr += eventGenerator->GetMultiplicity(); 
-        Printer::print(debugStr.Data(), i_event, nEvents);
+        eventGenerator->SetCentrality(2.5); // Cent = 2.5% is lowest available data point. 
+        Printer::print("\tNumber of particles generated: ", eventGenerator->GetMultiplicity());
 
         // Generate specified number/types of particles.
-        //eventGenerator->Generate("trig"); 
-        //eventGenerator->Generate("hJet"); // Pythia hard scattering
-        eventGenerator->Generate("bkg", eventGenerator->GetMultiplicity()); 
+        eventGenerator->Generate("bkg", (Int_t) eventGenerator->GetMultiplicity()); 
+        Printer::print("\tNumber of reconstructed particles: ", eventGenerator->GetRecoMult());
 
         // Use ClusterSequence to get store list of jets in this event.
         jetFinder->FindJets(eventGenerator->GetLastEvent());
-        debugStr  = "\tNumber of jets found: ";
-        debugStr += jetFinder->GetNumJets();
-        Printer::print(debugStr.Data(), i_event, nEvents);
+        Printer::print("\tNumber of jets found: ", jetFinder->GetNumJets());
 
         jetFinder->Clear();
     }
@@ -71,9 +59,7 @@ void ToyModel(Int_t nEvents = 1000) {
 
     // Create new ROOT file with generic EventModel objects, and
     // store desired jet histograms in subfolder "jetPlots".
-    TString fileName = "./rootFiles/ToyModel_";
-    fileName += nEvents;
-    fileName += ".root";
+    TString fileName = Form("./rootFiles/ToyModel_%d.root", nEvents);
     cout << "Writing data to " << fileName.Data();
     eventGenerator->Write(fileName);
     jetFinder->Write(fileName);

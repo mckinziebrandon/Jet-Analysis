@@ -1,6 +1,5 @@
 #ifndef MYJETFINDER_H
 #define MYJETFINDER_H
-#include "RootClasses.h"
 #include "fastjet/ClusterSequence.hh"
 #include <string>
 

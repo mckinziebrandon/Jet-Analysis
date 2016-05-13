@@ -6,10 +6,12 @@
 ********************************************************************************************/
 #include <iostream>
 #include <fstream>
+#include <string>
 #include "TChain.h"
 #include "TCanvas.h"
 #include "TClonesArray.h"
 #include "AliEventPoolManager.h"
+#include "TAlienCollection.h"
 #include "AliCFParticle.h"
 #include "TGrid.h"
 #include "THn.h"
@@ -18,15 +20,13 @@
 #include "./include/RootClasses.h"
 
 TH1* Divide(TH1* h, TGraph* g);
-void NormalizeCMS(TGraph* g);
 
 // --------------------------------------------------------------------------------------------
 void PlotData() {
-    const int trig = 0;
-    const int assoc = 1;
-    const int bkg = 2;
-    Float_t eta[3], phi[3], pt[3];
-    const float pi = TMath::Pi();
+    const TString PATH  = "/home/student/jet-radius-analysis/ToyModel/";
+    const Int_t nEvents = 1000;
+    const Float_t pi    = TMath::Pi();
+    Float_t eta, phi, pt;
     TString histName;
 
     /* ------------------------------------------------------------ *
@@ -34,25 +34,18 @@ void PlotData() {
      * ------------------------------------------------------------ */
 
     // Obtain actual data pt, eta, phi distribution trees. 
-    TString     fileName = "rootFiles/Data.root";
-    TFile*      fData   = new TFile(fileName.Data(), "READ");
+    TFile* fData    = new TFile(PATH + "rootFiles/Data.root", "READ");
+    TH1* hTrackPt   = (TH1F*) fData->Get("hTrackPtreco;1");
+    TH1* hTrackEta  = (TH1F*) fData->Get("hTrackEtareco;1");
+    TH1* hTrackPhi  = (TH1F*) fData->Get("hTrackPhireco;1");
 
-    // Make histograms with indices corresponding to {0: reco, 1: gen}.
-    TH1 *hTrackPt = (TH1F*) fData->Get("hTrackPtgen;1");
-    TH1 *hTrackEta = (TH1F*) fData->Get("hTrackEtagen;1");
-    TH1 *hTrackPhi = (TH1F*) fData->Get("hTrackPhigen;1");
-
-    // Grab phase space trees from ToyModel output. 
-    const int nEvents = 2000;
-    fileName = "./rootFiles/ToyModel_2000.root";
-    TFile*      fTrees = new TFile(fileName.Data());
+    // Grab simulated model data from ToyModel output. 
+    TFile* fTrees = new TFile(Form("./rootFiles/ToyModel_%d.root", nEvents));
     TDirectory* dirTrees = (TDirectory*) fTrees->Get("trees;1");
-
-    // Phase space: background.
     TTree* tBkg = (TTree*) dirTrees->Get("tBkg;1");
-    tBkg->SetBranchAddress("eta", &eta[bkg]);
-    tBkg->SetBranchAddress("phi", &phi[bkg]);
-    tBkg->SetBranchAddress("pt", &pt[bkg]);
+    tBkg->SetBranchAddress("eta", &eta);
+    tBkg->SetBranchAddress("phi", &phi);
+    tBkg->SetBranchAddress("pt", &pt);
     
     // Create histograms.
     TH1* hModelPt = new TH1F("hModelPt", "", numBins, xBins);
@@ -61,25 +54,25 @@ void PlotData() {
     hModelEta->SetBit(TH1::kCanRebin);
     hModelPhi->SetBit(TH1::kCanRebin);
 
-    TFile*  fileALICE  = new TFile("/home/student/jet-radius-analysis/ToyModel/rootFiles/ALICE_pt.root");
-    TGraph* graphALICE = (TGraphAsymmErrors*) fileALICE->Get("ptDistribution;1");
+    // Get data points from published ALICE and CMS pt distributions. 
+    TFile* fileALICE    = new TFile(PATH + "rootFiles/ALICE_pt.root");
+    TGraph* graphALICE  = (TGraphAsymmErrors*) fileALICE->Get("ptDistribution;1");
     graphALICE->SetTitle(";p_{T} (GeV/c); #frac{1}{N_{evt}}#frac{1}{2#pi p_{T}}#frac{d^{2}N_{ch}}{dp_{T}d#eta} (GeV/c)^{-2}");
 
-    const Int_t n_ALICE_Events = 53573;
-    TFile*  fileCMS  = new TFile("/home/student/jet-radius-analysis/ToyModel/rootFiles/CMS_pt.root");
+    TFile* fileCMS = new TFile(PATH + "rootFiles/CMS_pt.root");
     TGraph* graphCMS = (TGraphAsymmErrors*) fileCMS->Get("ptDistribution;1");
-    NormalizeCMS(graphCMS);
+    graphCMS->SetMarkerStyle(styles[1]);
+    graphCMS->SetMarkerColor(colors[2]);
 
     // Get toy model of soft background. 
     int nBkg = (int) tBkg->GetEntries();
     for (int i_bkg = 0; i_bkg < nBkg; i_bkg++) {
-        // Each event has nBkg entries in tBkg.
         tBkg->GetEntry(i_bkg);
-        if (!pt[bkg]) continue;
+        if (!pt) continue;
         Float_t normPt = 1 / ((Float_t) nEvents);
-        hModelPt->Fill(pt[bkg], normPt);
-        hModelEta->Fill(eta[bkg]);
-        hModelPhi->Fill(phi[bkg]);
+        hModelPt->Fill(pt, normPt);
+        hModelEta->Fill(eta);
+        hModelPhi->Fill(phi);
     }
     hModelPt->Scale(1, "width");
 
@@ -87,36 +80,29 @@ void PlotData() {
      * Drawing and Saving.                                          *
      * ------------------------------------------------------------ */
 
-    fileName = "./rootFiles/PlotData.root";
-    TFile* outFile = new TFile(fileName.Data(), "RECREATE");
+    TFile* outFile = new TFile(PATH + "rootFiles/PlotData.root", "RECREATE");
     outFile->cd();
 
     // __________________ Draw individual pt/eta/phi plots for data and model.  __________________
     TCanvas * canvas = new TCanvas("canvas", "canvas delta", 1000, 500);
     canvas->Divide(3, 2);
-    Int_t iPad = 1; // heh
-    TString yLabel;
-    TString effCorr = "#frac{1}{#varepsilon}"; 
-
+    Int_t iPad = 1; 
+    
+    const std::string effCorr = "#frac{1}{#varepsilon}";
+    const std::string yLabel[] = {"#frac{1}{2#pi p_{T}}#frac{dN}{dp_{T}}", 
+                                  "#frac{dN}{d#eta}"
+                                  "#frac{dN}{d#phi}" };
     // --------- Draw Data distributions --------- 
-    yLabel = "#frac{1}{#varepsilon}#frac{1}{2#pi p_{T}}";
-    yLabel += "#frac{dN}{dp_{T}}";
-    Draw(hTrackPt, (TString) "p_{T} (GeV/c)", yLabel, colors[1], canvas, iPad);
-
-    yLabel =  "#frac{1}{#varepsilon}#frac{dN}{d#eta}";
-    Draw(hTrackEta, (TString) "#eta", yLabel, colors[1], canvas, iPad);
-
-    yLabel = "#frac{1}{#varepsilon}#frac{dN}{d#phi}";
-    Draw(hTrackPhi, (TString) "#phi", yLabel, colors[1], canvas, iPad);
+    Draw(hTrackPt, "p_{T} (GeV/c)", (effCorr + yLabel[0]).data(), colors[1], canvas, iPad);
+    Draw(hTrackEta, "#eta", (effCorr + yLabel[1]).data(), colors[1], canvas, iPad);
+    Draw(hTrackPhi, "#phi", (effCorr + yLabel[2]).data(), colors[1], canvas, iPad);
     // --------------------------------------------
 
     // --------- Draw Model distributions --------- 
-    Draw(hModelPt, (TString) "p_{T} (GeV/c)", (TString) "#frac{1}{2#pi p_{T}}#frac{dN}{dp_{T}}", colors[0], canvas, iPad);
-    Draw(hModelEta, (TString) "#eta", (TString) "dN/d#eta", colors[0], canvas, iPad);
-    Draw(hModelPhi, (TString) "#phi", (TString) "dN/d#phi", colors[0], canvas, iPad);
+    Draw(hModelPt, "p_{T} (GeV/c)", yLabel[0].Data(), colors[0], canvas, iPad);
+    Draw(hModelEta, "#eta", yLabel[1].data(), colors[0], canvas, iPad);
+    Draw(hModelPhi, "#phi", yLabel[2].data(), colors[0], canvas, iPad);
     // ---------------------------------------------
-
-    canvas->Write();
 
     // __________________ Draw superimposed pt/eta/phi plots data/model.  __________________
     TCanvas * canvasCompare = new TCanvas("canvasCompare", "superimposed canvas", 1000, 800);
@@ -132,13 +118,12 @@ void PlotData() {
     // --------------- Ratio of histograms ---------------------
     TH1* hRatio = new TH1F("hRatio", "", numBins, xBins);
     TH1* hRatioSample = Divide(hTrackPt, graphALICE);
-    TGraph* AliceOverCms = GetAliceOverCms(hTrackPt, graphCMS);
     hRatio->Divide(hModelPt, hTrackPt);
     DrawRatio(hRatio, hRatioSample, canvasCompare);
     gPad->SetTicks(1, 1);
 
+    canvas->Write();
     canvasCompare->Write(); 
-    outFile->Close();
 }
 
 #ifndef __CINT__
@@ -158,18 +143,4 @@ TH1* Divide(TH1* h, TGraph* g) {
     }
     return res;
 }
-
-void NormalizeCMS(TGraph* g) {
-    const Float_t n_Coll_CMS = 1660.; // pm 130
-    for (int i = 0; i < g->GetN(); i++) {
-        Double_t pt, _;
-        g->GetPoint(i, pt, _);
-        cout << "pt = " << pt << endl;
-        //g->GetY()[i] *= n_Coll_CMS;
-    }
-
-    g->SetMarkerStyle(styles[1]);
-    g->SetMarkerColor(colors[2]);
-}
-
 

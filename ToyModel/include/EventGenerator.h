@@ -1,9 +1,8 @@
 #ifndef EVENTMODEL_H
 #define EVENTMODEL_H
 // User-defined headers.
-#include "RootClasses.h"
 #include "EventFunctions.h"
-#include "Printer.h"
+//#include "Printer.h"
 // C++ headers.
 #include <string>
 #include <vector>
@@ -43,6 +42,10 @@ class EventGenerator {
         /* Returns random number b/w -1 and 1, corresponding to ALICE acceptance. */
         Float_t GetRandEta();
         Double_t GetTrackPt(Float_t xMin=ptMin);
+        /* Returns efficiency from 4-d histogram based on current track values. */
+        Float_t GetEfficiency();
+        /* Returns current value of recoMult. Should be called after event is generated. */
+        Int_t GetRecoMult();
 
         /* ---------------------------------------------------------------- *
          * Setters                                                          *
@@ -59,11 +62,13 @@ class EventGenerator {
         /* ---------------------------------------------------------------- *
          * Data Containers                                                  *
          * ---------------------------------------------------------------- */
-        Float_t percentCentrality, multiplicity;
+        Float_t centrality, multiplicity;
         Float_t eta, phi, pt;
+        Int_t recoMult;
         TTree* tTrig;
         TTree* tAssoc;
         TTree* tBkg;
+        THn* hEff;
         TSpline* spline;
 
         /* ---------------------------------------------------------------- *

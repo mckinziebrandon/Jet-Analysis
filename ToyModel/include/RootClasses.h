@@ -1,6 +1,7 @@
 #ifndef ROOTCLASSES_H
 #define ROOTCLASSES_H
 #include <iostream>
+#include <string>
 using namespace std;
 
 #include "TBranch.h"
@@ -16,6 +17,7 @@ using namespace std;
 #include "TH1F.h"
 #include "TH2.h"
 #include "TH2F.h"
+#include "THn.h"
 #include "THStack.h"
 #include "TLatex.h"
 #include "TLegend.h"
@@ -30,7 +32,9 @@ using namespace std;
 #include "TString.h"
 #include "TTree.h"
 
-// ------------------------------------------------
+void DrawLegend(TH1* hModel, TH1* hData, TGraph* g, TGraph* g2, TCanvas* c, Int_t& iPad);
+
+// -------------------------------------------------------------------------------------------------
 const Color_t colors[] = {36, 32, 221, 49};
 const Style_t styles[] = {kOpenCircle, kOpenSquare};
 // pt bins from data.           1           2           3           4           5
@@ -45,35 +49,21 @@ const Double_t xBins[] = {0.3, 0.325+0.025, 0.375+0.025, 0.425+0.025, 0.475+0.02
                             7.5+0.375,   8.5+0.5,   9.5+0.5,   10.5+0.5,  11.5+0.5, // 9
                             12.5+0.5,  13.5+0.5,  14.5+0.5,  15.5+0.5,  17.0+0.75, 19.0+1};
 const int numBins = 51;
-// ------------------------------------------------
+// -------------------------------------------------------------------------------------------------
 
 
-// --------------------------------------------------------------------------------------
 template<typename Hist>
-void SetDrawOptions(Hist* h, Color_t col, TString x_label="", TString  y_label="");
-template<typename Hist>
-void Draw(Hist* hModel, Hist* hData, TCanvas* c, Int_t& iPad);
-template<typename Hist>
-void Draw(Hist* h, TString xLabel, TString yLabel, Color_t col, TCanvas* c, Int_t& iPad);
-template<typename Graph>
-void Draw(Graph* g, TCanvas* c, Int_t& iPad);
-void DrawLegend(TH1* hModel, TH1* hData, TGraph* g, TGraph* g2, TCanvas* c, Int_t& iPad);
-void DrawRatio(TH1* hModDat, TH1* hModSamp, TCanvas* c);
-// --------------------------------------------------------------------------------------
-
-template<typename Hist>
-void SetDrawOptions(Hist* h, Color_t col, TString x_label="", TString  y_label="") {
+extern void SetDrawOptions(Hist* h, Color_t col, const char* x_label="", const char* y_label="") {
     h->SetStats(0);
+    // Line and fill properties.
     h->SetFillColor(col);
     h->SetLineColor(col);
     h->SetLineWidth(2);
     h->SetFillStyle(0);
-    if (x_label != "" && y_label != "")
-    {
-        h->SetTitle("");
-        h->GetXaxis()->SetTitle(x_label.Data());
-        h->GetYaxis()->SetTitle(y_label.Data());
-    }
+    // Axis properties.
+    h->SetTitle("");
+    h->GetXaxis()->SetTitle(x_label);
+    h->GetYaxis()->SetTitle(y_label);
     h->GetXaxis()->SetTitleSize(0.05);
     h->GetYaxis()->SetTitleOffset(1.2);
     h->GetYaxis()->SetTitleSize(0.04);
@@ -82,7 +72,7 @@ void SetDrawOptions(Hist* h, Color_t col, TString x_label="", TString  y_label="
 }
 
 template<typename Hist>
-void Draw(Hist* hModel, Hist* hData, TCanvas* c, Int_t& iPad) {
+extern void Draw(Hist* hModel, Hist* hData, TCanvas* c, Int_t& iPad) {
     if (iPad == 1) { c->cd(iPad)->SetLogy(1); }
     c->cd(iPad);
     hModel->Draw("same");
@@ -102,8 +92,9 @@ void DrawLegend(TH1* hModel, TH1* hData, TGraph* g, TGraph* g2, TCanvas* c, Int_
 }
 
 
+// Draws the histogram on iPad of canvas, increments iPad by 1, and sets the draw options. 
 template<typename Hist>
-void Draw(Hist* h, TString xLabel, TString yLabel, Color_t col, TCanvas* c, Int_t& iPad) {
+extern void Draw(Hist* h, const char* xLabel, const char* yLabel, Color_t col, TCanvas* c, Int_t& iPad) {
     if (iPad == 1 || iPad == 4) { c->cd(iPad)->SetLogy(1); } // so janky
     c->cd(iPad++);
     h->Draw();
@@ -111,7 +102,7 @@ void Draw(Hist* h, TString xLabel, TString yLabel, Color_t col, TCanvas* c, Int_
 }
 
 template<typename Graph>
-void Draw(Graph* g, TCanvas* c, Int_t& iPad) {
+extern void Draw(Graph* g, TCanvas* c, Int_t& iPad) {
     c->cd(iPad);
     g->Draw("AP");
     g->GetXaxis()->CenterTitle();
@@ -120,7 +111,7 @@ void Draw(Graph* g, TCanvas* c, Int_t& iPad) {
     g->SetMarkerStyle(styles[0]);
 }
 
-void DrawRatio(TH1* hModDat, TH1* hModSamp, TCanvas* c) {
+extern void DrawRatio(TH1* hModDat, TH1* hModSamp, TCanvas* c) {
     c->cd(2)->SetLogy(0);
     c->cd(2);
     //hModDat->Draw("same");
