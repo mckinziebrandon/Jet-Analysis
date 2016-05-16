@@ -1,8 +1,9 @@
 #ifndef EVENTMODEL_H
 #define EVENTMODEL_H
 // User-defined headers.
+#include "RootClasses.h"
 #include "EventFunctions.h"
-//#include "Printer.h"
+#include "Printer.h"
 // C++ headers.
 #include <string>
 #include <vector>
@@ -14,7 +15,8 @@ using namespace fastjet;
 using namespace Pythia8; // new
 
 // ---------- Constants ----------
-const Float_t ptMin = 0.325;
+const Float_t maxEta = 0.8;
+const Float_t ptMin = 0.5;
 const Float_t ptMax = 20.0;
 const Float_t sigmaDeltaPhi = (pi / 4) / 2;
 const Float_t trigPtThreshold = 5.0;
@@ -65,6 +67,7 @@ class EventGenerator {
         Float_t centrality, multiplicity;
         Float_t eta, phi, pt;
         Int_t recoMult;
+        Int_t effVars[4];
         TTree* tTrig;
         TTree* tAssoc;
         TTree* tBkg;

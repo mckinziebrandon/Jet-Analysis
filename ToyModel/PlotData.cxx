@@ -99,7 +99,7 @@ void PlotData() {
     // --------------------------------------------
 
     // --------- Draw Model distributions --------- 
-    Draw(hModelPt, "p_{T} (GeV/c)", yLabel[0].Data(), colors[0], canvas, iPad);
+    Draw(hModelPt, "p_{T} (GeV/c)", yLabel[0].data(), colors[0], canvas, iPad);
     Draw(hModelEta, "#eta", yLabel[1].data(), colors[0], canvas, iPad);
     Draw(hModelPhi, "#phi", yLabel[2].data(), colors[0], canvas, iPad);
     // ---------------------------------------------

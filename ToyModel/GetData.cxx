@@ -118,7 +118,7 @@ void GetData() {
         Draw(hTrackPt[i], "p_{T} (GeV/c)", 
                 (effCorr[i] + "#frac{1}{2#pi p_{T}}#frac{dN}{dp_{T}}").data(), 
                 colors[1], canvas, iPad);
-        Draw(hTrackEta[i], "#eta", (effCorr[i]+ "#frac{dN}{d#eta}").data(), colors[1], canvas, iPad);
+        Draw(hTrackEta[i], "#eta", (effCorr[i] + "#frac{dN}{d#eta}").data(), colors[1], canvas, iPad);
         Draw(hTrackPhi[i], "#phi", (effCorr[i] + "#frac{dN}{d#phi}").data(), colors[1], canvas, iPad);
     }
     canvas->Write();

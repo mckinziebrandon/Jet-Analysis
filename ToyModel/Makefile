@@ -35,12 +35,12 @@ FJETFLAGS 	 = `fastjet-config --cxxflags --libs --plugins`
 
 # Header and object files. 
 DEPS 	= $(INCLUDE)/EventGenerator.h $(INCLUDE)/RootClasses.h  $(INCLUDE)/EventFunctions.h $(INCLUDE)/MyJetFinder.h $(INCLUDE)/Printer.h
-LIBFILES= $(LIB)/EventGenerator.so  $(LIB)/EventFunctions.so $(LIB)/MyJetFinder.so $(LIB)/Printer.so 
+LIBFILES= $(LIB)/EventGenerator.so  $(LIB)/EventFunctions.so $(LIB)/MyJetFinder.so $(LIB)/Printer.so  $(LIB)/RootClasses.so
 
 # Object files needed by each target. 
 OBJ1= $(BASEDIR)/ToyModel.so $(LIBFILES) $(STATICLIB)
 OBJ2= PlotModel.so 	$(LIBFILES) $(STATICLIB)
-OBJ3= PlotFinder.so $(LIBFILES) $(STATICLIB)
+OBJ3= $(BASEDIR)/PlotFinder.so $(LIB)/RootClasses.so
 OBJ4= PythiaEvent.so $(LIBFILES) $(STATICLIB)
 OBJ5= PlotData.so  	$(LIBFILES) $(STATICLIB) 
 
@@ -64,7 +64,7 @@ PlotModel: $(OBJ2)
 
 PlotFinder: $(OBJ3)
 	echo "Beginning compilation of $@ . . . "
-	$(CXX) -o $@ $(OBJ3) $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
+	$(CXX) -o $@ $^ $(FLAGS) $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
 
 PythiaEvent: $(OBJ4) 
 	echo "Beginning compilation of $@ . . . "

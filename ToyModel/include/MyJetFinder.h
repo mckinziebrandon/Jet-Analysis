@@ -1,14 +1,18 @@
 #ifndef MYJETFINDER_H
 #define MYJETFINDER_H
 #include "fastjet/ClusterSequence.hh"
+#include "fastjet/ClusterSequenceArea.hh"
+#include "fastjet/Selector.hh"
+#include "fastjet/tools/Subtractor.hh"
+#include "fastjet/tools/JetMedianBackgroundEstimator.hh"
 #include <string>
 
 using namespace fastjet;
 using std::vector;
 using std::string;
 
-const Float_t R     = 0.3;
-const Float_t ptmin = 0.0;
+static const Float_t R = 0.3;
+static const Int_t Remove_N_hardest = 0;
 
 class MyJetFinder {
     public:
@@ -20,6 +24,7 @@ class MyJetFinder {
         void    Clear();
         void    Write(TString fileName);
     private:
+        Double_t rho, sigma;
         /* jetDef contains a full specification of _how_ to carry out
          * the clustering. For now, only specify anti-kt algorithm and
          * desired jet radius R. Use default recombination scheme and strategy. */
@@ -28,7 +33,7 @@ class MyJetFinder {
         TNtuple* 			tNJets;
         TNtuple* 			tJetInfo;
         /* clusterSequence object is responsible for running the jet clustering. */
-        ClusterSequence* 	clusterSequence;
+        ClusterSequenceArea* 	clusterSequence;
         /* Store vector of particles wrapped as PseudoJets before any clustering occurs. */
         vector<PseudoJet> 	particlesVector;
         /* Store vector of PseudoJets built by FastJet during clustering procedure. */

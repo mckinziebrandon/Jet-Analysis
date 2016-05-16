@@ -10,15 +10,14 @@ EventGenerator::EventGenerator() {
 
     // ----- Initialize all instance variables. -----
     rand    = new TRandom3();
+    functions = new EventFunctions();
     tTrig   = (TTree*)InitializeTrigger();
     tAssoc  = (TTree*)InitializeAssoc();
     tBkg    = (TTree*)InitializeBackground();
-    functions = new EventFunctions();
     // TODO: correct way to get multiplicity??
     //multiplicity = 1.6 * 2.0 * pi * functions->GetfTrackSpectrum()->Integral(0.5, 20.0);
 
     // ----- Store fits to all desired distributions inside the functions variable. -----
-
     // 1. Get efficiency 4d histogram. 
     TFile* fEff = new TFile((PATH + "TaskBrandon/correction_2010_aod162_hybrid.root").data(), "READ");
     hEff = (THnD*) fEff->Get("correction;1");
@@ -29,16 +28,22 @@ EventGenerator::EventGenerator() {
     TGraph* g = (TGraphAsymmErrors*) file_v2->Get("v2Plot_2;1");
     g->Fit(functions->GetfPolynomial(), "RQ");
     g->Fit(functions->GetfLine(), "RQ+");
+    delete file_v2;
 
     // 3. Get pt distribution.
     TFile*  fileALICE  = new TFile((PATH + "ALICE_pt.root").data());
     TGraph* graphALICE = (TGraphAsymmErrors*) fileALICE->Get("ptDistribution;1");
     graphALICE->Fit(functions->GetfTrackSpectrum(), "RQ");
+    delete fileALICE;
 
     // 4. Get multiplicity vs. centrality distribution. 
     TFile * multFile = new TFile((PATH + "Multiplicity.root").data());
     TGraph* gMult = (TGraphAsymmErrors*) multFile->Get("multiplicity;1");
     spline = new TSpline3("spline", gMult);
+    delete multFile;
+
+    effVars[2]  = (Int_t) hEff->GetAxis(2)->FindBin(2.5); 
+    effVars[3]  = (Int_t) hEff->GetAxis(3)->FindBin(0.0);           // ok to fix zVtx to 0.0?
 }
 
 /************************************
@@ -54,6 +59,7 @@ EventGenerator::~EventGenerator() {
 }
 
 void EventGenerator::Write(TString fileName) {
+    Printer::print("Writing EventGenerator to file...");
     TFile* topFile = new TFile(fileName.Data(), "RECREATE");
 
     //_____________ Store all trees. _____________
@@ -76,34 +82,35 @@ void EventGenerator::Write(TString fileName) {
 }
 
 Float_t EventGenerator::GetEfficiency() {
-    Int_t effVars[4];
     effVars[0]  = hEff->GetAxis(0)->FindBin(eta);
     effVars[1]  = hEff->GetAxis(1)->FindBin(pt); 
-    effVars[2]  = hEff->GetAxis(2)->FindBin(rand->Uniform(5.0));   // random centrality.
-    effVars[3]  = hEff->GetAxis(3)->FindBin(0.0);           // ok to fix zVtx to 0.0?
-    Float_t res = 1.0 / (Float_t) hEff->GetBinContent(effVars);    
-    if (res > 1.0) {
-        throw "Error: efficiency value must be <= 1";
-    }
-    return res;
+    return 1.0 / (Float_t) hEff->GetBinContent(effVars);    
 }
 
 Float_t EventGenerator::Generate(const string& str, Int_t n) {
-    Printer::print("Entering EventGenerator::Generate");
+    Printer::print("\tEntering EventGenerator::Generate");
     recoMult = 0;
     if (str == "bkg") {
-        Printer::print("\tBeginning background particle construction . . .");
+        Printer::print("\t\tBeginning background particle construction . . .");
+        if (Printer::debug) cout << "\t\tSome efficiences: ";
+        int debugCounter = 0;
         for (Int_t i = 0; i < n; i++) {
             eta = GetRandEta();
             pt  = GetTrackPt(ptMin);
             phi = GetPhi(pt);
             // Fill track tree probabalistically based on efficiency. 
             // Needs to be done track-by-track since Eff is function of track properties.
-            if (rand->Rndm() < GetEfficiency()) {
+            Float_t eff = GetEfficiency();
+            if (Printer::debug && !(i % 100)) {
+                cout << Form("%.2f, ", eff);
+                if (!(debugCounter++ % 5)) cout << endl << "\t\t";
+            }
+            if (rand->Rndm() < eff) {
                 tBkg->Fill();
                 recoMult++;
             }
         }
+        if (Printer::debug) cout << endl;
         return pt;
 	} else if (str == "trig") {
         // Create the trigger particle. 
@@ -157,7 +164,7 @@ PseudoJet EventGenerator::GetPseudoJet() {
 *****************************************************/
 Float_t EventGenerator::GetPhi(Float_t pt) {
     // Todo: Implement more legitmate method of getting v2 than mult by 2.
-    functions->GetfdNdPhi()->SetParameter("v2", 3.0 * GetV2(pt));
+    functions->GetfdNdPhi()->SetParameter("v2", 1.5 * GetV2(pt));
     return functions->GetfdNdPhi()->GetRandom();
 }
 
@@ -191,12 +198,13 @@ Float_t EventGenerator::dphi(Float_t phi1, Float_t phi2)
 
 /* Returns random eta uniform in [-1, 1]. */
 Float_t EventGenerator::GetRandEta() { 
-    return rand->Uniform(-1.00, 1.00); 
+    // Switching to -0.8 to 0.8
+    // TODO: verify this doesn't screw anything else up
+    return rand->Uniform(-maxEta, maxEta);
 }
 
 /* Returns random pt from boltzmann probability distribution. */
 Double_t EventGenerator::GetTrackPt(Float_t xMin) { 
-    Printer::print("\t\tEntering EventGenerator::GetTrackPt with pT = ", xMin);
     return functions->GetfTrackSpectrum()->GetRandom(xMin, 20.0); 
 }
 

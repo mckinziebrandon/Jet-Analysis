@@ -6,7 +6,7 @@
  * the FastJet methods. */
 MyJetFinder::MyJetFinder() {
     tNJets      = new TNtuple("tNJets", "Number of jets in event", "n");
-    tJetInfo    = new TNtuple("tJetInfo", "pt of reco jets in event", "pt:eta:phi");
+    tJetInfo    = new TNtuple("tJetInfo", "pt of reco jets in event", "pt:eta:phi:area:ptSub");
     // Create jet definition. Should not change.
     jetDef = JetDefinition(antikt_algorithm, R);
 }
@@ -18,12 +18,41 @@ MyJetFinder::~MyJetFinder() {
 
 /* Cluster on particlesVector and create jetsVector.*/
 void MyJetFinder::FindJets(vector<PseudoJet> event) {
+    // Jet area definition. 
+    Double_t ghostMaxRap = maxEta; // Fiducial cut for back
+    GhostedAreaSpec areaSpec(ghostMaxRap);
+    AreaDefinition areaDef(active_area_explicit_ghosts, GhostedAreaSpec(ghostMaxRap, 1, 0.01));
+
+    // Cluster all particles in event according to jet area & area definitions.
     particlesVector = event;
-    clusterSequence = new ClusterSequence(particlesVector, jetDef);
-    jetsVector      = sorted_by_pt(clusterSequence->inclusive_jets(/*ptmin*/));
+    clusterSequence = new ClusterSequenceArea(particlesVector, jetDef, areaDef);
+
+    // Assert jetsVector = all jets(pt > ptMin) and satisfy fiducial cut.
+    Selector fidCutSelector = SelectorAbsEtaMax(1.0 - R);
+    jetsVector = sorted_by_pt(clusterSequence->inclusive_jets(ptMin));
+    jetsVector = fidCutSelector(jetsVector);
+
+    // Background definition.
+    JetDefinition jetDefBkg(kt_algorithm, R);
+    AreaDefinition areaDefBkg(active_area_explicit_ghosts, GhostedAreaSpec(ghostMaxRap, 1, 0.01));
+    Selector bkgSelector = SelectorAbsEtaMax(1.0) * (!SelectorNHardest(Remove_N_hardest));
+
+    // Background estimation and subtraction. 
+    JetMedianBackgroundEstimator bkgEstimator(bkgSelector, jetDefBkg, areaDefBkg);
+    Subtractor subtractor(&bkgEstimator);
+    bkgEstimator.set_particles(particlesVector);
+
+    // Obtain rho: the median bkg pT per area. 
+    rho     = bkgEstimator.rho();
+    sigma   = bkgEstimator.sigma();
+
     tNJets->Fill((Int_t) jetsVector.size());
     for (Int_t i = 0; i < jetsVector.size(); i++) {
-    	tJetInfo->Fill(jetsVector[i].pt(), jetsVector[i].eta(), jetsVector[i].phi());
+    	tJetInfo->Fill(jetsVector[i].pt(), 
+                jetsVector[i].eta(), 
+                jetsVector[i].phi(), 
+                jetsVector[i].area(),
+                jetsVector[i].perp() - rho * jetsVector[i].area());
     }
 }
 

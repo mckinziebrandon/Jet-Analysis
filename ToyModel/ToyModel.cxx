@@ -17,6 +17,7 @@
 // ---------------------------------------------------------------------------------
 void ToyModel(Int_t nEvents = 1000) {
     using std::cout;
+    using std::endl;
 
     /* ------------------------------------------------ *
      * Object Declarations.            					*
@@ -34,9 +35,7 @@ void ToyModel(Int_t nEvents = 1000) {
     // Simulate nEvents with randomly generated tracks. 
     for (Int_t i_event = 0; i_event < nEvents; i_event++) {
     	// Print progress updates.
-        if (i_event % (nEvents / 20) == 0) {
-            Printer::print("Percent Complete: ", i_event * 100 / nEvents);
-        }
+        Printer::print("Percent Complete: ", i_event,  nEvents);
 
         // Defined event centrality (and thus multiplicity);
         eventGenerator->SetCentrality(2.5); // Cent = 2.5% is lowest available data point. 
@@ -46,7 +45,7 @@ void ToyModel(Int_t nEvents = 1000) {
         eventGenerator->Generate("bkg", (Int_t) eventGenerator->GetMultiplicity()); 
         Printer::print("\tNumber of reconstructed particles: ", eventGenerator->GetRecoMult());
 
-        // Use ClusterSequence to get store list of jets in this event.
+        // Use ClusterSequence to get list of jets in this event.
         jetFinder->FindJets(eventGenerator->GetLastEvent());
         Printer::print("\tNumber of jets found: ", jetFinder->GetNumJets());
 

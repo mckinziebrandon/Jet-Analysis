@@ -16,6 +16,7 @@ void PythiaEvent() {
     pythia.init();
 
     TH1* hNTrig = new TH1F("hNTrig", "Number of high-pt Pythia objects per event", 20, 0.0, 20.0);
+    TH1* hPt = new TH1F("hPt", "pt spectra from pythia", 100, 0., 30.);
 
     // Begin event loop. Generate event. Skip if error. List first one.
     for (int iEvent = 0; iEvent < 10; ++iEvent) {
