@@ -58,6 +58,105 @@ EventGenerator::~EventGenerator() {
     delete tBkg;
 }
 
+/**************************************************************
+* Returns the tracking efficiency of current particle,        *
+* determined by the current values of eta and pt.             *
+* EventGenerator assumes that (Z-vtx = 0, cent = 2.5) always. *
+***************************************************************/
+Float_t EventGenerator::GetEfficiency() {
+    effVars[0]  = hEff->GetAxis(0)->FindBin(eta);
+    effVars[1]  = hEff->GetAxis(1)->FindBin(pt); 
+    //return 1.0 / (Float_t) hEff->GetBinContent(effVars); // TODO: eventually switch back
+    return 1.0;
+
+}
+
+/************************************************************
+* Generate(str, n):                                         *
+* Most important method of EventGenerator class.            *
+* STR identifies the type of particle(s) to be generated.   *
+* N identifies the number of particles to be generated.     *
+* All particles generated are stored in a TTree object.     *
+*************************************************************/
+Float_t EventGenerator::Generate(const string& str, Int_t n) {
+    Printer::print("\tEntering EventGenerator::Generate");
+    recoMult = 0;
+    if (str == "bkg") {
+        Printer::print("\t\tBeginning background particle construction . . .");
+        for (Int_t i = 0; i < n; i++) {
+            eta = GetRandEta();
+            pt  = GetTrackPt(ptMin);
+            phi = GetPhi(pt);
+            // Fill track tree probabalistically based on efficiency. 
+            // Needs to be done track-by-track since Eff is function of track properties.
+            Float_t eff = GetEfficiency();
+            if (rand->Rndm() < eff) {
+                tBkg->Fill();
+                recoMult++;
+            }
+        }
+        return pt;
+	} else if (str == "trig") {
+        // Create the trigger particle. 
+        eta = GetRandEta();
+        pt  = GetTrackPt(trigPtThreshold);
+        phi = GetPhi(pt);
+        tTrig->Fill();
+        Float_t res = pt;
+        // Create its associated particle.
+        pt = ptMax;
+    	eta = -eta;
+    	phi = GetAssocPhi(phi);
+    	tAssoc->Fill();
+        return res;
+    } else {
+        std::cout << "Error: EventGenerator::Generate() called with bad str." << std::endl;
+        return -1;
+    }
+}
+
+/********************************************************************
+* Wraps all particles in tBkg into PseudoJets                       *
+* and returns a vector of these (PseudoJets).                       *
+* Primarily used to hand off to a JetFinder object for analysis.    *
+*********************************************************************/
+vector<PseudoJet> EventGenerator::GetLastEvent() {
+    vector<PseudoJet> res;
+    // Initialize entry index to first background particle in most recent event. 
+    Int_t entry = tBkg->GetEntries() - multiplicity;
+    // Loop over all background particles in most recent event and store as PseudoJets in res.
+    while (entry++ < tBkg->GetEntries()) {
+        tBkg->GetEntry(entry);
+        res.push_back(GetPseudoJet());
+    }
+    // Place most recent associated particle (forced to be always one) in res.
+    tAssoc->GetEntry(tAssoc->GetEntries()-1);
+    res.push_back(GetPseudoJet());
+    // Place most recent trigger particle in res.
+    tTrig->GetEntry(tTrig->GetEntries()-1);
+    res.push_back(GetPseudoJet());
+    return res;
+}
+
+/*****************************************************************
+* GetPseudoJet(): Private helper method of GetLastEvent()        *
+* Returns current values of pt, eta, phi wrapped in a PseudoJet. * 
+*****************************************************************/
+PseudoJet EventGenerator::GetPseudoJet() {
+    TLorentzVector tlvTemp;
+    tlvTemp.SetPtEtaPhiM(pt, eta, phi, 0.0);
+    PseudoJet jetTemp(tlvTemp.Px(), tlvTemp.Py(), tlvTemp.Pz(), tlvTemp.E());
+    return jetTemp;
+}
+
+
+/************************************************************************
+* Creates a new ROOT file with name FILENAME.                           *
+* Stores the tree objects in a subdirectory named "trees".              *
+* Stores the fit functions in a subdirectory called "functions".        *
+* Note that the friend class of EventGenerator, JetFinder, may choose   *
+* to update (but not overwrite) these files with jet information.       *
+*************************************************************************/
 void EventGenerator::Write(TString fileName) {
     Printer::print("Writing EventGenerator to file...");
     TFile* topFile = new TFile(fileName.Data(), "RECREATE");
@@ -81,90 +180,14 @@ void EventGenerator::Write(TString fileName) {
     delete topFile;
 }
 
-Float_t EventGenerator::GetEfficiency() {
-    effVars[0]  = hEff->GetAxis(0)->FindBin(eta);
-    effVars[1]  = hEff->GetAxis(1)->FindBin(pt); 
-    return 1.0 / (Float_t) hEff->GetBinContent(effVars);    
-}
-
-Float_t EventGenerator::Generate(const string& str, Int_t n) {
-    Printer::print("\tEntering EventGenerator::Generate");
-    recoMult = 0;
-    if (str == "bkg") {
-        Printer::print("\t\tBeginning background particle construction . . .");
-        if (Printer::debug) cout << "\t\tSome efficiences: ";
-        int debugCounter = 0;
-        for (Int_t i = 0; i < n; i++) {
-            eta = GetRandEta();
-            pt  = GetTrackPt(ptMin);
-            phi = GetPhi(pt);
-            // Fill track tree probabalistically based on efficiency. 
-            // Needs to be done track-by-track since Eff is function of track properties.
-            Float_t eff = GetEfficiency();
-            if (Printer::debug && !(i % 100)) {
-                cout << Form("%.2f, ", eff);
-                if (!(debugCounter++ % 5)) cout << endl << "\t\t";
-            }
-            if (rand->Rndm() < eff) {
-                tBkg->Fill();
-                recoMult++;
-            }
-        }
-        if (Printer::debug) cout << endl;
-        return pt;
-	} else if (str == "trig") {
-        // Create the trigger particle. 
-        eta = GetRandEta();
-        pt  = GetTrackPt(trigPtThreshold);
-        phi = GetPhi(pt);
-        tTrig->Fill();
-        Float_t res = pt;
-        // Create its associated particle.
-        pt = ptMax;
-    	eta = -eta;
-    	phi = GetAssocPhi(phi);
-    	tAssoc->Fill();
-        return res;
-    } else {
-        std::cout << "Error: EventGenerator::Generate() called with bad str." << std::endl;
-        return -1;
-    }
-}
-
-// 
-vector<PseudoJet> EventGenerator::GetLastEvent() {
-    vector<PseudoJet> res;
-    // Initialize entry index to first background particle in most recent event. 
-    Int_t entry = tBkg->GetEntries() - multiplicity;
-    // Loop over all background particles in most recent event and store as PseudoJets in res.
-    while (entry++ < tBkg->GetEntries()) {
-        tBkg->GetEntry(entry);
-        res.push_back(GetPseudoJet());
-    }
-    // Place most recent associated particle (forced to be always one) in res.
-    tAssoc->GetEntry(tAssoc->GetEntries()-1);
-    res.push_back(GetPseudoJet());
-    // Place most recent trigger particle in res.
-    tTrig->GetEntry(tTrig->GetEntries()-1);
-    res.push_back(GetPseudoJet());
-    return res;
-}
-
-/* Returns current values of pt, eta, phi wrapped in a PseudoJet. */
-PseudoJet EventGenerator::GetPseudoJet() {
-    TLorentzVector tlvTemp;
-    tlvTemp.SetPtEtaPhiM(pt, eta, phi, 0.0);
-    PseudoJet jetTemp(tlvTemp.Px(), tlvTemp.Py(), tlvTemp.Pz(), tlvTemp.E());
-    return jetTemp;
-}
-
 /****************************************************
 * Returns random value of phi that depends on       *
 * the value of v2(pt) input parameter for dN/dPhi.  *
 *****************************************************/
 Float_t EventGenerator::GetPhi(Float_t pt) {
     // Todo: Implement more legitmate method of getting v2 than mult by 2.
-    functions->GetfdNdPhi()->SetParameter("v2", 1.5 * GetV2(pt));
+    //functions->GetfdNdPhi()->SetParameter("v2", 1.5 * GetV2(pt));// TODO: switch back on
+    functions->GetfdNdPhi()->SetParameter("v2", 0.);// TODO: switch back on
     return functions->GetfdNdPhi()->GetRandom();
 }
 
@@ -200,7 +223,7 @@ Float_t EventGenerator::dphi(Float_t phi1, Float_t phi2)
 Float_t EventGenerator::GetRandEta() { 
     // Switching to -0.8 to 0.8
     // TODO: verify this doesn't screw anything else up
-    return rand->Uniform(-maxEta, maxEta);
+    return rand->Uniform(-etaMax, etaMax);
 }
 
 /* Returns random pt from boltzmann probability distribution. */

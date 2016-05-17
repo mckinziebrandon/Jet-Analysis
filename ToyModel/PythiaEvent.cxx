@@ -1,3 +1,9 @@
+/********************************************************************************************
+* Filename:     PythiaEvent.cxx                                                             *
+* Date Created: UNKNOWN (gasp)                                                              *
+* Author:       Brandon McKinzie                                                            *
+* Description: Create pythia events with hard scattering, to be patched onto Toy Model.     *
+********************************************************************************************/
 #include <iostream>
 #include "./include/RootClasses.h"
 #include "Pythia8/Pythia.h"

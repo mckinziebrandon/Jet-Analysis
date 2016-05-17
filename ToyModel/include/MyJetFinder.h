@@ -30,7 +30,7 @@ class MyJetFinder {
          * desired jet radius R. Use default recombination scheme and strategy. */
         JetDefinition 		jetDef;
         /* Underlying data structures for jet information are TNtuples. */
-        TNtuple* 			tNJets;
+        TNtuple* 			tEventJetInfo;
         TNtuple* 			tJetInfo;
         /* clusterSequence object is responsible for running the jet clustering. */
         ClusterSequenceArea* 	clusterSequence;

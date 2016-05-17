@@ -15,11 +15,11 @@ using namespace fastjet;
 using namespace Pythia8; // new
 
 // ---------- Constants ----------
-const Float_t maxEta = 0.8;
-const Float_t ptMin = 0.5;
-const Float_t ptMax = 20.0;
-const Float_t sigmaDeltaPhi = (pi / 4) / 2;
-const Float_t trigPtThreshold = 5.0;
+static const Float_t etaMax = 0.9;
+static const Float_t ptMin = 0.5;
+static const Float_t ptMax = 20.0;
+static const Float_t sigmaDeltaPhi = (pi / 4) / 2;
+static const Float_t trigPtThreshold = 5.0;
 // -------------------------------
 
 class EventGenerator {

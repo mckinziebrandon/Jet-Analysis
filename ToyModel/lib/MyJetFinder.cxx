@@ -5,9 +5,8 @@
  * MyJetFinder creates TLorentzVectors that can interact with
  * the FastJet methods. */
 MyJetFinder::MyJetFinder() {
-    tNJets      = new TNtuple("tNJets", "Number of jets in event", "n");
-    tJetInfo    = new TNtuple("tJetInfo", "pt of reco jets in event", "pt:eta:phi:area:ptSub");
-    // Create jet definition. Should not change.
+    tEventJetInfo      = new TNtuple("tEventJetInfo", "Event jet properties", "n:rho:sigma");
+    tJetInfo    = new TNtuple("tJetInfo", "Individual jet properties.", "pt:eta:phi:area:ptSub");
     jetDef = JetDefinition(antikt_algorithm, R);
 }
 
@@ -19,7 +18,7 @@ MyJetFinder::~MyJetFinder() {
 /* Cluster on particlesVector and create jetsVector.*/
 void MyJetFinder::FindJets(vector<PseudoJet> event) {
     // Jet area definition. 
-    Double_t ghostMaxRap = maxEta; // Fiducial cut for back
+    Double_t ghostMaxRap = etaMax; // Fiducial cut for back
     GhostedAreaSpec areaSpec(ghostMaxRap);
     AreaDefinition areaDef(active_area_explicit_ghosts, GhostedAreaSpec(ghostMaxRap, 1, 0.01));
 
@@ -28,14 +27,14 @@ void MyJetFinder::FindJets(vector<PseudoJet> event) {
     clusterSequence = new ClusterSequenceArea(particlesVector, jetDef, areaDef);
 
     // Assert jetsVector = all jets(pt > ptMin) and satisfy fiducial cut.
-    Selector fidCutSelector = SelectorAbsEtaMax(1.0 - R);
+    Selector fidCutSelector = SelectorAbsEtaMax(etaMax - R);
     jetsVector = sorted_by_pt(clusterSequence->inclusive_jets(ptMin));
     jetsVector = fidCutSelector(jetsVector);
 
     // Background definition.
     JetDefinition jetDefBkg(kt_algorithm, R);
     AreaDefinition areaDefBkg(active_area_explicit_ghosts, GhostedAreaSpec(ghostMaxRap, 1, 0.01));
-    Selector bkgSelector = SelectorAbsEtaMax(1.0) * (!SelectorNHardest(Remove_N_hardest));
+    Selector bkgSelector = SelectorAbsEtaMax(etaMax) * (!SelectorNHardest(Remove_N_hardest));
 
     // Background estimation and subtraction. 
     JetMedianBackgroundEstimator bkgEstimator(bkgSelector, jetDefBkg, areaDefBkg);
@@ -46,7 +45,7 @@ void MyJetFinder::FindJets(vector<PseudoJet> event) {
     rho     = bkgEstimator.rho();
     sigma   = bkgEstimator.sigma();
 
-    tNJets->Fill((Int_t) jetsVector.size());
+    tEventJetInfo->Fill((Int_t) jetsVector.size(), (Double_t) rho, (Double_t) sigma);
     for (Int_t i = 0; i < jetsVector.size(); i++) {
     	tJetInfo->Fill(jetsVector[i].pt(), 
                 jetsVector[i].eta(), 
@@ -88,16 +87,16 @@ void MyJetFinder::PrintJets() {
     }
 }
 
-/*
- * Places a jetPlots directory in the root file created by EventGenerator::Write().
- */
+/************************************************************************************
+ * Places a jetPlots directory in the root file created by EventGenerator::Write(). *
+ ************************************************************************************/
 void MyJetFinder::Write(TString fileName) {
     TFile* jetFile = new TFile(fileName.Data(), "UPDATE");
 
     // _____ Store all plots from jet finder. _____
     TDirectory* jetDir = jetFile->mkdir("jetPlots");
     jetDir->cd();
-    jetDir->Add(tNJets, true);
+    jetDir->Add(tEventJetInfo, true);
     jetDir->Add(tJetInfo, true);
 
     jetFile->Write();

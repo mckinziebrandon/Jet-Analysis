@@ -10,8 +10,8 @@ void SetDrawOptions(Hist* h, Color_t col, const char* x_label="", const char* y_
     h->SetFillStyle(0);
     // Axis properties.
     h->SetTitle("");
-    h->GetXaxis()->SetTitle(x_label);
-    h->GetYaxis()->SetTitle(y_label);
+    if (strcmp(x_label, "") != 0) h->GetXaxis()->SetTitle(x_label);
+    if (strcmp(y_label, "") != 0) h->GetYaxis()->SetTitle(y_label);
     h->GetXaxis()->SetTitleSize(0.05);
     h->GetYaxis()->SetTitleOffset(1.2);
     h->GetYaxis()->SetTitleSize(0.04);
@@ -41,9 +41,9 @@ void DrawLegend(TH1* hModel, TH1* hData, TGraph* g, TGraph* g2, TCanvas* c, Int_
 
 
 // Draws the histogram on iPad of canvas, increments iPad by 1, and sets the draw options. 
-template<typename Hist>
-void Draw(Hist* h, const char* xLabel, const char* yLabel, Color_t col, TCanvas* c, Int_t& iPad) {
-    if (iPad == 1 || iPad == 4) { c->cd(iPad)->SetLogy(1); } // so janky
+//template<typename Hist>
+void Draw(TH1* h, const char* xLabel, const char* yLabel, Color_t col, TCanvas* c, Int_t& iPad, bool setLog) {
+    if (setLog && (iPad == 1 || iPad == 4)) { c->cd(iPad)->SetLogy(1); } // so janky
     c->cd(iPad++);
     h->Draw();
     SetDrawOptions(h, col, xLabel, yLabel);

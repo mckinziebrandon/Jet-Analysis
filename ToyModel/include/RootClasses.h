@@ -1,3 +1,5 @@
+#ifndef ROOTCLASSES_H
+#define ROOTCLASSES_H
 #include <iostream>
 #include <string>
 using namespace std;
@@ -30,18 +32,20 @@ using namespace std;
 #include "TString.h"
 #include "TTree.h"
 
-#ifndef ROOTCLASSES_H
-#define ROOTCLASSES_H
+
+void Draw(TH1* h, const char* xLabel, const char* yLabel, Color_t col, TCanvas* c, Int_t& iPad, bool setLog);
 
 void DrawLegend(TH1* hModel, TH1* hData, TGraph* g, TGraph* g2, TCanvas* c, Int_t& iPad);
+
 template<typename Hist>
 void SetDrawOptions(Hist* h, Color_t col, const char* x_label="", const char* y_label="");
+
 template<typename Hist>
 void Draw(Hist* hModel, Hist* hData, TCanvas* c, Int_t& iPad);
-template<typename Hist>
-void Draw(Hist* h, const char* xLabel, const char* yLabel, Color_t col, TCanvas* c, Int_t& iPad);
+
 template<typename Graph>
 void Draw(Graph* g, TCanvas* c, Int_t& iPad);
+
 void DrawRatio(TH1* hModDat, TH1* hModSamp, TCanvas* c);
 
 // -------------------------------------------------------------------------------------------------
@@ -62,6 +66,8 @@ const int numBins = 51;
 // -------------------------------------------------------------------------------------------------
 
 
+/*
+IF UNCOMMENTING, RECOPY FROM ROOTCLASSES (MADE CHANGES)
 template<typename Hist>
 void SetDrawOptions(Hist* h, Color_t col, const char* x_label="", const char* y_label="") {
     h->SetStats(0);
@@ -142,5 +148,6 @@ void DrawRatio(TH1* hModDat, TH1* hModSamp, TCanvas* c) {
     legRatio->SetBorderSize(0);
     legRatio->Draw();
 }
+*/
 
 #endif

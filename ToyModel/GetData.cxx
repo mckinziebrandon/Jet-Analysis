@@ -1,8 +1,8 @@
 /********************************************************************************************
-* Filename:     GetData.cxx
-* Date Created: April 13, 2016
+* Filename:     GetData.cxx                                                                 *
+* Date Created: April 13, 2016                                                              *
 * Author:       Brandon McKinzie                                                            *
-* Description:  Grab data and plot it. 
+* Description:  Grab AOD data and plot/save it. May or may not correct for efficiency.      *
 ********************************************************************************************/
 #include <iostream>
 #include <fstream>

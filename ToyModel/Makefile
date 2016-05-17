@@ -56,7 +56,7 @@ $(DICT):
 
 ToyModel: $(OBJ1) 
 	echo "Beginning compilation of $@ . . . "
-	$(CXX) -o $@ $^ $(FLAGS) $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
+	$(CXX) -o $@ $^ $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
 
 PlotModel: $(OBJ2)
 	echo "Beginning compilation of $@ . . . "
@@ -64,7 +64,7 @@ PlotModel: $(OBJ2)
 
 PlotFinder: $(OBJ3)
 	echo "Beginning compilation of $@ . . . "
-	$(CXX) -o $@ $^ $(FLAGS) $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
+	$(CXX) -o $@ $^ $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS) -Wl,--no-as-needed
 
 PythiaEvent: $(OBJ4) 
 	echo "Beginning compilation of $@ . . . "
