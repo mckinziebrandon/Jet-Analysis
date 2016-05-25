@@ -1,9 +1,9 @@
 #include "../include/EventFunctions.h"
 #include "../include/EventGenerator.h"
 
-/************************************
-* Default EventGenerator Constructor.   *
-* Initializes all instance objects. *
+/*************************************
+* Default EventGenerator Constructor.*
+* Initializes all instance objects.  *
 *************************************/
 EventGenerator::EventGenerator() {    
     std::string PATH = "/home/student/jet-radius-analysis/";
@@ -58,18 +58,6 @@ EventGenerator::~EventGenerator() {
     delete tBkg;
 }
 
-/**************************************************************
-* Returns the tracking efficiency of current particle,        *
-* determined by the current values of eta and pt.             *
-* EventGenerator assumes that (Z-vtx = 0, cent = 2.5) always. *
-***************************************************************/
-Float_t EventGenerator::GetEfficiency() {
-    effVars[0]  = hEff->GetAxis(0)->FindBin(eta);
-    effVars[1]  = hEff->GetAxis(1)->FindBin(pt); 
-    //return 1.0 / (Float_t) hEff->GetBinContent(effVars); // TODO: eventually switch back
-    return 1.0;
-
-}
 
 /************************************************************
 * Generate(str, n):                                         *
@@ -84,16 +72,18 @@ Float_t EventGenerator::Generate(const string& str, Int_t n) {
     if (str == "bkg") {
         Printer::print("\t\tBeginning background particle construction . . .");
         for (Int_t i = 0; i < n; i++) {
-            eta = GetRandEta();
             pt  = GetTrackPt(ptMin);
+            eta = GetRandEta();
             phi = GetPhi(pt);
             // Fill track tree probabalistically based on efficiency. 
             // Needs to be done track-by-track since Eff is function of track properties.
-            Float_t eff = GetEfficiency();
-            if (rand->Rndm() < eff) {
+            //if (rand->Uniform(1.0) < GetEfficiency()) {
+                if(pt > 2.5) {
+                    Printer::print(Form("\t\t(pt, eta) = (%.2f, %.2f)", pt, eta));
+                }
                 tBkg->Fill();
                 recoMult++;
-            }
+            //}
         }
         return pt;
 	} else if (str == "trig") {
@@ -104,7 +94,7 @@ Float_t EventGenerator::Generate(const string& str, Int_t n) {
         tTrig->Fill();
         Float_t res = pt;
         // Create its associated particle.
-        pt = ptMax;
+        pt  = ptMax;
     	eta = -eta;
     	phi = GetAssocPhi(phi);
     	tAssoc->Fill();
@@ -115,8 +105,22 @@ Float_t EventGenerator::Generate(const string& str, Int_t n) {
     }
 }
 
+/**************************************************************
+* GetEfficiency(): Private helper to Generate().              *
+* Returns the tracking efficiency of current particle,        *
+* determined by the current values of eta and pt.             *
+* EventGenerator assumes that (Z-vtx = 0, cent = 2.5) always. *
+***************************************************************/
+Float_t EventGenerator::GetEfficiency() {
+    //effVars[0]  = hEff->GetAxis(0)->FindBin(eta);
+    //effVars[1]  = hEff->GetAxis(1)->FindBin(pt); 
+    //return 1.0 / (Float_t) hEff->GetBinContent(effVars); // TODO: eventually switch back
+    return 1.0;
+
+}
+
 /********************************************************************
-* Wraps all particles in tBkg into PseudoJets                       *
+* GetLastEvent(): Wraps all tBkg particles into PseudoJets          *
 * and returns a vector of these (PseudoJets).                       *
 * Primarily used to hand off to a JetFinder object for analysis.    *
 *********************************************************************/
@@ -157,9 +161,9 @@ PseudoJet EventGenerator::GetPseudoJet() {
 * Note that the friend class of EventGenerator, JetFinder, may choose   *
 * to update (but not overwrite) these files with jet information.       *
 *************************************************************************/
-void EventGenerator::Write(TString fileName) {
+void EventGenerator::Write(const char* fileName) {
     Printer::print("Writing EventGenerator to file...");
-    TFile* topFile = new TFile(fileName.Data(), "RECREATE");
+    TFile* topFile = new TFile(fileName, "RECREATE");
 
     //_____________ Store all trees. _____________
     TDirectory* treeDir = topFile->mkdir("trees");
@@ -231,8 +235,6 @@ Double_t EventGenerator::GetTrackPt(Float_t xMin) {
     return functions->GetfTrackSpectrum()->GetRandom(xMin, 20.0); 
 }
 
-
-
 void EventGenerator::SetCentrality(int percent) {
     centrality = percent;
     multiplicity = spline->Eval(percent);
@@ -258,8 +260,7 @@ Float_t EventGenerator::GetV2(Float_t pt) {
     return (Float_t) functions->GetfLine()->Eval(18.);
 }
 
-TTree* EventGenerator::InitializeTrigger()
-{
+TTree* EventGenerator::InitializeTrigger() {
     TTree* tt = new TTree("tTrig", "Trigger particle attributes");
     tt->Branch("eta", &eta);
     tt->Branch("phi", &phi);
@@ -267,8 +268,7 @@ TTree* EventGenerator::InitializeTrigger()
     return tt;
 }
 
-TTree* EventGenerator::InitializeAssoc()
-{
+TTree* EventGenerator::InitializeAssoc() {
     TTree* ta = new TTree("tAssoc", "Associated particle attributes");
     ta->Branch("eta", &eta);
     ta->Branch("phi", &phi);
@@ -276,8 +276,7 @@ TTree* EventGenerator::InitializeAssoc()
     return ta;
 }
 
-TTree* EventGenerator::InitializeBackground()
-{
+TTree* EventGenerator::InitializeBackground() {
     TTree* tb = new TTree("tBkg", "Background particle attributes");
     tb->Branch("eta", &eta);
     tb->Branch("phi", &phi);

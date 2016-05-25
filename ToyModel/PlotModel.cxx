@@ -14,189 +14,73 @@
 
 // --------------------------------------------------------------------------------------------
 void PlotModel(Int_t nEvents = 1000) {
-    const int trig = 0;
-    const int assoc = 1;
-    const int bkg = 2;
-    Float_t eta[3], phi[3], pt[3];
-    TString histName;
-
     /* ------------------------------------------------------------ *
      * Store input file data into trees.                            *
      * ------------------------------------------------------------ */
 
-    TString fileName = "./rootFiles/ToyModel_";
-    fileName += nEvents;
-    fileName += ".root";
+    cout << "Beginning PlotModel for " << nEvents << " number of Events . . . " << endl;
 
     // Grab phase space trees from ToyModel.C output. 
-    TFile*      fTrees = new TFile(fileName.Data());
-    TDirectory* dirTrees = (TDirectory*) fTrees->Get("trees;1");
-
-    // Phase space: trigger.
-    TTree* tTrig = (TTree*) dirTrees->Get("tTrig;1");
-    tTrig->SetBranchAddress("eta", &eta[trig]);
-    tTrig->SetBranchAddress("phi", &phi[trig]);
-    tTrig->SetBranchAddress("pt", &pt[trig]);
-
-    // Phase space: associated.
-    TTree* tAssoc = (TTree*) dirTrees->Get("tAssoc;1");
-    tAssoc->SetBranchAddress("eta", &eta[assoc]);
-    tAssoc->SetBranchAddress("phi", &phi[assoc]);
-    tAssoc->SetBranchAddress("pt", &pt[assoc]);
-
-    // Phase space: background.
-    TTree* tBkg = (TTree*) dirTrees->Get("tBkg;1");
-    tBkg->SetBranchAddress("eta", &eta[bkg]);
-    tBkg->SetBranchAddress("phi", &phi[bkg]);
-    tBkg->SetBranchAddress("pt", &pt[bkg]);
-    
-    // Create deltaPhi histograms.
-    TH1F* hDPhiAll = new TH1F("hDPhiAll", "", 100, 0., 2*pi);
-    TH1F* hDPhiBkg = new TH1F("hDPhiBkg", "", 100, 0., 2*pi);
-
-    // Create deltaEta histograms.
-    TH1F* hDEtaAll = new TH1F("hDEtaAll", "", 80, -2., 2.);
-    TH1F* hDEtaBkg = new TH1F("hDEtaBkg", "", 80, -2., 2.);
-
-    // Create 2D dPhidEta histograms.
-    TH2F* hDPhiDEtaAll     = new TH2F("hDPhiDEtaAll", "", 100, 0., 2*pi, 80, -2., 2.);
-    TH2F* hDPhiDEtaBkg = new TH2F("hDPhiDEtaBkg", "", 100, 0., 2*pi, 80, -2., 2.);
-
-    /* ---------------------------------------------------- *
-     * Data Processing.                                     *
-     * ---------------------------------------------------- */
-
-    // Loop over tree entries.
-    int nBkg = (int) tBkg->GetEntries() / nEvents;
-    for (Int_t i_event = 0; i_event < nEvents; i_event++)
-    {
-        // Store ith event variables in eta[], phi[], pt[].
-        tTrig->GetEntry(i_event);
-        tAssoc->GetEntry(i_event);
-    
-        // Calculate differences in phase space quantities.
-        Float_t deltaPhi = EventGenerator::dphi(phi[trig], phi[assoc]);
-        Float_t deltaEta = eta[trig] - eta[assoc];
-
-        // Fill Histograms with trig-assoc data.
-        hDPhiAll->Fill(deltaPhi);
-        hDEtaAll->Fill(deltaEta);
-        hDPhiDEtaAll->Fill(deltaPhi, deltaEta);
-
-        // Calculate differences w.r.t. background.
-        for (int i_bkg = 0; i_bkg < nBkg; i_bkg++)
-        {
-            // Each event has nBkg entries in tBkg.
-            tBkg->GetEntry(nBkg * i_event + i_bkg);
-            deltaPhi = EventGenerator::dphi(phi[trig], phi[bkg]);
-            deltaPhi = EventGenerator::dphi((float) phi[trig], (float) phi[bkg]);
-            deltaEta = eta[trig] - eta[bkg];
-
-            // Fill background subtracted quantities. 
-            hDPhiAll->Fill(deltaPhi);
-            hDEtaAll->Fill(deltaEta);
-            hDPhiDEtaAll->Fill(deltaPhi, deltaEta);
-
-            hDPhiBkg->Fill(deltaPhi);
-            hDEtaBkg->Fill(deltaEta);
-            hDPhiDEtaBkg->Fill(deltaPhi, deltaEta);
-        }
-    }
-
+    TFile* fTrees           = new TFile(Form("./rootFiles/ToyModel_%d.root", nEvents), "READ");
+    TDirectory* dirTrees    = (TDirectory*) fTrees->Get("trees;1");
+    TTree* tBkg             = (TTree*) dirTrees->Get("tBkg;1");
 
     /* ------------------------------------------------------------ *
-     * Drawing and Saving.                                          *
+     * Drawing into the Histograms.                                 *
      * ------------------------------------------------------------ */
 
-    fileName = "./rootFiles/PlotModel_";
-    fileName += nEvents;
-    fileName += ".root";
-    TFile* outFile = new TFile(fileName.Data(), "RECREATE");
+    TH2* hPhiEta = new TH2F("hPhiEta", "", 100, 0., 2. * pi, 100, -etaMax, etaMax);
+    TH2* hPtEta = new TH2F("hPtEta", "", 100, 0., 20., 100, -etaMax, etaMax);
+
+    tBkg->Draw("pt>>hPt");
+    tBkg->Draw("eta>>hEta");
+    tBkg->Draw("phi>>hPhi");
+    tBkg->Draw("eta:phi>>hPhiEta");
+    tBkg->Draw("eta:pt>>hPtEta");
+
+    TH1* hPt    = (TH1F*) gDirectory->Get("hPt");
+    TH1* hEta   = (TH1F*) gDirectory->Get("hEta");
+    TH1* hPhi   = (TH1F*) gDirectory->Get("hPhi");
+
+    /* ------------------------------------------------------------ *
+     * Canvas Drawing                                               *
+     * ------------------------------------------------------------ */
+
+    TFile* outFile = new TFile(Form("./rootFiles/PlotModel_%d.root", nEvents), "RECREATE");
     outFile->cd();
 
-    // __________________ Draw All Delta Phi/Eta Plot(s) ____________________
-    TCanvas * cDelta = new TCanvas("cDelta", "canvas delta", 1000, 500);
-    cDelta->Divide(3, 1);
+    // _________________ Basic Canvas : pT, eta, phi _________________
+    TCanvas* cBasic = new TCanvas("cBasic", "cBasic", 1000, 500);
+    cBasic->Divide(3, 1); Int_t iPad = 1;
 
-    // ----------------------- Fill delta phi canvas. -----------------------
-    cDelta->cd(1);
-    hDPhiAll->Draw();
-    hDPhiBkg->Draw("same");
-    SetDrawOptions(hDPhiAll, 36, (TString) "#Delta#phi", (TString) "dN/d#Delta#phi");
-    SetDrawOptions(hDPhiBkg, 45, (TString) "#Delta#phi", (TString) "dN/d#Delta#phi");
-    hDPhiBkg->SetFillStyle(3003);
-    
-    TLegend * legDPhi = new TLegend(0.6, 0.8, 0.9, 0.9);
-    legDPhi->AddEntry(hDPhiAll, "#phi_{trig} - #phi_{assoc+bkg}", "l");
-    legDPhi->AddEntry(hDPhiBkg, "#phi_{trig} - #phi_{bkg}", "lf");
-    legDPhi->SetBorderSize(0);
-    legDPhi->SetTextSize(0.05);
-    legDPhi->Draw();
+    const std::string xLab = "p_{T} (GeV/c)";
+    const std::string yLab = "#frac{1}{2#pi p_{T}N_{evt}}#frac{d^{2}N_{ch}}{dp_{T}d#eta} (GeV/c)^{-2}";
+    Draw(hPt,  cBasic, iPad, colors[0], xLab.data(), yLab.data(), "SetLogy");
+    Draw(hEta, cBasic, iPad, colors[0], "#eta", "dN/d#eta");
+    Draw(hPhi, cBasic, iPad, colors[0], "#varphi", "dN/d#varphi");
 
-    // ----------------------- Fill delta eta canvas. -----------------------
-    cDelta->cd(2);
-    hDEtaAll->Draw();
-    hDEtaBkg->Draw("same");
-    SetDrawOptions(hDEtaAll, 36, (TString) "#Delta#eta", (TString) "dN/d#Delta#eta");
-    SetDrawOptions(hDEtaBkg, 45, (TString) "#Delta#eta", (TString) "dN/d#Delta#eta");
-    hDEtaBkg->SetFillStyle(3003);
+    // _________________ {Phi;pT}-Eta Canvas _________________
+    TCanvas* cPhiEta = new TCanvas("cPhiEta", "cPhiEta", 700, 700);
+    cPhiEta->Divide(2, 1); iPad = 1;
 
-    TLegend * leg_deta = new TLegend(0.6, 0.8, 0.9, 0.9);
-    leg_deta->AddEntry(hDEtaAll, "#eta_{trig} - #eta_{assoc+bkg}", "l");
-    leg_deta->AddEntry(hDEtaBkg, "#eta_{trig} - #eta_{bkg}", "lf");
-    leg_deta->SetBorderSize(0);
-    leg_deta->SetTextSize(0.05);
-    leg_deta->Draw();
+    cPhiEta->cd(iPad++);
+    tBkg->Draw("eta:pt", "", "colz");
+    //Draw(hPtEta,  cPhiEta, iPad, colors[0], xLab.data(), "#eta", "SetLogx");
+    Draw(hPhiEta, cPhiEta, iPad, colors[0], "#phi", "#eta");
 
-    // --------------- Fill delta eta vs. delta phi canvas. -----------------
-    cDelta->cd(3);
-    hDPhiDEtaAll->Draw("colz");
-    SetDrawOptions(hDPhiDEtaAll, 36, (TString) "#Delta#phi", (TString) "#Delta#eta");
+    cPhiEta->WaitPrimitive();
 
-
-    outFile->cd();
-    cDelta->Write();
-
-    // __________________ Draw All Basic Phase Space Plot(s).  ____________________
-    TCanvas * cBasic = new TCanvas("cBasic", "pt eta phi of all particles", 1000, 500);
-    cBasic->Divide(3, 3);
-    Int_t pad = 1;
-    int col = 0;
-
-    tTrig->SetLineColor(colors[col++]);
-    tAssoc->SetLineColor(colors[col++]);
-    tBkg->SetLineColor(colors[col++]);
-
-    // Trigger 
-    cBasic->cd(pad++);
-    tTrig->Draw("pt");
-    cBasic->cd(pad++);
-    tTrig->Draw("eta");
-    cBasic->cd(pad++);
-    tTrig->Draw("phi");
-
-    // Associated 
-    cBasic->cd(pad++);
-    tAssoc->Draw("pt");
-    cBasic->cd(pad++);
-    tAssoc->Draw("eta");
-    cBasic->cd(pad++);
-    tAssoc->Draw("phi");
-
-    // Background 
-    cBasic->cd(pad++);
-    tBkg->Draw("pt");
-    cBasic->cd(pad++);
-    tBkg->Draw("eta");
-    cBasic->cd(pad++);
-    tBkg->Draw("phi");
-
+    // Write canvases to output ROOT file. 
     cBasic->Write();
+    cPhiEta->Write();
 }
 
 #ifndef __CINT__
 int main(int argc, char* argv[]) 
 {
+    // Needed for incredibly obscure reason. 
+    TApplication theAPP("App", &argc, argv);
+
     if (argc == 2) 
         PlotModel(std::atoi(argv[1]));
     else

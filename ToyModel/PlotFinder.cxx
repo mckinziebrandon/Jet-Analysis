@@ -8,103 +8,77 @@
 #include <fstream>
 #include <string>
 #include "./include/RootClasses.h"
-#include "TApplication.h"
+#include "./include/MyJetFinder.h"
 
 // --------------------------------------------------------------------------------------------
 void PlotFinder(Int_t nEvents = 1000) {
     using std::cout;
     using std::endl;
-    using std::string;
     
     cout << "Plotting jet quantities from most recent Toy Model run of " 
          << nEvents << " number of events...." << endl;
 
-    const Float_t pi = (Float_t) TMath::Pi();
-    const int nJetVariables = 5;
-    const string hJetNames[nJetVariables] = {"hPt", "hEta", "hPhi", "hArea", "hPtSub"};
-    const string hJetLabels[nJetVariables] = { "p_{T}^{jet,reco}", "#eta^{jet}", "#varphi^{jet}", 
-                                                "Area", "p_{T}^{jet,reco} - #rho A"};
 
     /* ------------------------------------------------------------ *
      * Store input file data into trees.                            *
      * ------------------------------------------------------------ */
 
     // Grab phase space trees from ToyModel.C output. 
-    TFile*      fTrees = new TFile(Form("./rootFiles/ToyModel_%d.root", nEvents), "READ");
-    TDirectory* dirJets	 = (TDirectory*) fTrees->Get("jetPlots;1");
-
-    // Per-event jet information.
-    Float_t nJets, rho, sigma;
-    TTree* tEventJetInfo = (TTree*) dirJets->Get("tEventJetInfo;1");
-    tEventJetInfo->SetBranchAddress("n", &nJets);
-    tEventJetInfo->SetBranchAddress("rho", &rho);
-    tEventJetInfo->SetBranchAddress("sigma", &sigma);
-
-    // Per-jet information.
-    Float_t pt, eta, phi, area, ptSub;
-    TTree* tJetInfo= (TTree*) dirJets->Get("tJetInfo;1");
-    tJetInfo->SetBranchAddress("pt", &pt);
-    tJetInfo->SetBranchAddress("eta", &eta);
-    tJetInfo->SetBranchAddress("phi", &phi);
-    tJetInfo->SetBranchAddress("area", &area);
-    tJetInfo->SetBranchAddress("ptSub", &ptSub);
+    TFile* fTrees           = new TFile(Form("./rootFiles/ToyModel_%d.root", nEvents), "READ");
+    TDirectory* dirJets	    = (TDirectory*) fTrees->Get("jetPlots;1");
+    TTree* tEventJetInfo    = (TTree*) dirJets->Get("tEventJetInfo;1");
+    TTree* tJetInfo         = (TTree*) dirJets->Get("tJetInfo;1");
 
     /* ---------------------------------------------------- *
-     * Histogram Creation.                                     *
+     * Extract desired plots from trees into histograms.    *
      * ---------------------------------------------------- */
 
-    // n, rho, sigma (event variables)
-    TH1* hNJets = new TH1F("hNJets", "Number of Jets per Event", 50, 20., 60.);
-    TH1* hRho   = new TH1F("hRho", ";#rho^{event}", 100, 100., 150.);
-    TH1* hSigma = new TH1F("hSigma", ";#sigma^{event}", 100, 5., 30.);
-    hNJets->SetBit(TH1::kCanRebin);
-    hRho->SetBit(TH1::kCanRebin);
-    hSigma->SetBit(TH1::kCanRebin);
+    // Event-by-event jet properties. 
+    tEventJetInfo->Draw("n>>hNJets");       
+    tEventJetInfo->Draw("rho>>hRho");
+    tEventJetInfo->Draw("sigma>>hSigma");
+    TH1* hNJets = (TH1F*) gDirectory->Get("hNJets");
+    TH1* hRho   = (TH1F*) gDirectory->Get("hRho");
+    TH1* hSigma = (TH1F*) gDirectory->Get("hSigma");
 
-    // pT, eta, phi.
-    Int_t iName = 0;
-    TH1* hPt    = new TH1F(hJetNames[iName].data(), hJetLabels[iName++].data(), 100, 0., 100.);
-    TH1* hEta   = new TH1F(hJetNames[iName].data(), hJetLabels[iName++].data(), 100, -0.8, 0.8);
-    TH1* hPhi   = new TH1F(hJetNames[iName].data(), hJetLabels[iName++].data(), 100, 0., 2. * pi);
+    // 1D Histograms; WITHOUT area cut. 
+    tJetInfo->Draw("area>>hArea", Form("area <= %f", areaMin)); // ish
+    tJetInfo->Draw("ptSub>>hPtSub");
+    tJetInfo->Draw("pt>>hPt");
+    tJetInfo->Draw("eta>>hEta", "ptSub>0.0");
+    tJetInfo->Draw("phi>>hPhi");
+    TH1* hPt            = (TH1F*) gDirectory->Get("hPt");
+    TH1* hEta           = (TH1F*) gDirectory->Get("hEta");
+    TH1* hPhi           = (TH1F*) gDirectory->Get("hPhi");
+    TH1* hArea  = (TH1F*) gDirectory->Get("hArea");
+    TH1* hPtSub = (TH1F*) gDirectory->Get("hPtSub");
 
-    // Area and pTSub. 
-    TH1* hArea  = new TH1F(hJetNames[iName].data(), hJetLabels[iName++].data(), 100, 0., 0.5);
-    TH1* hPtSub = new TH1F(hJetNames[iName].data(), hJetLabels[iName++].data(), 100, -30., 80.);
-    hArea->SetBit(TH1::kCanRebin);
-    hPtSub->SetBit(TH1::kCanRebin);
+    // 2D Histograms; WITHOUT area cut. 
+    tJetInfo->Draw("eta:phi>>hPhiEta");
+    tJetInfo->Draw("eta:pt>>hPtEta");
+    tJetInfo->Draw("eta:ptSub>>hPtSubEta");
+    tJetInfo->Draw("pt:area>>hAreaPt");
+    tJetInfo->Draw("ptSub:area>>hAreaPtSub");
+    TH2* hPhiEta    = (TH2F*) gDirectory->Get("hPhiEta");
+    TH2* hPtEta     = (TH2F*) gDirectory->Get("hPtEta");
+    TH2* hPtSubEta  = (TH2F*) gDirectory->Get("hPtSubEta");
+    TH2* hAreaPt    = (TH2F*) gDirectory->Get("hAreaPt");    
+    TH2* hAreaPtSub = (TH2F*) gDirectory->Get("hAreaPtSub");
 
-    // 2-D plot of pT v area, as recommended by Peter. 
-    TH2* hPtArea = new TH2D("hPtArea", ";p_{T}^{jet};Area", 100, 0., 100., 100, 0., 0.5);
+    // 1D Histograms; WITH area cut. 
+    TCut areaCut = Form("area > %f", areaMin);
+    tJetInfo->Draw("area>>hAreaCut", areaCut);
+    tJetInfo->Draw("ptSub>>hPtSubWithACut", areaCut);
+    TH1* hAreaCut       = (TH1F*) gDirectory->Get("hAreaCut");
+    TH1* hPtSubWithACut = (TH1F*) gDirectory->Get("hPtSubWithACut");
 
-    /* ---------------------------------------------------- *
-     * Data Processing.                                     *
-     * ---------------------------------------------------- */
-    // Loop over tree entries.
-    cout << "tEventJetInfo has " << tEventJetInfo->GetEntries() << " entries." << endl;
-    cout << "tJetInfo has " << tJetInfo->GetEntries() << " entries." << endl;
-    Int_t jetCounter = 0;
-    for (Int_t i_event = 0; i_event < nEvents; i_event++)
-    {
-        // Could probably just use draw() methods of TNtuple...
-        tEventJetInfo->GetEntry(i_event);
-        hNJets->Fill(nJets);
-        hRho->Fill(rho);
-        hSigma->Fill(sigma);
-
-        // Fill individual jet variables over nJets in this event.
-        for (int i = 0; i < (int) nJets; i++) {
-            tJetInfo->GetEntry(jetCounter++);
-            // Area cut suggested by Peter. 
-            if (area > 0.15) {
-                hPt->Fill(pt);
-                hEta->Fill(eta);
-                hPhi->Fill(phi);
-                hArea->Fill(area);
-                hPtSub->Fill(ptSub);
-                hPtArea->Fill(pt, area);
-            }
-        }
-    }
+    // 2D Histograms; WITH area cut. 
+    tJetInfo->Draw("eta:phi>>hPhiEtaWithACut", areaCut);
+    tJetInfo->Draw("eta:pt>>hPtEtaWithACut", areaCut);
+    tJetInfo->Draw("eta:ptSub>>hPtSubEtaWithACut", areaCut);
+    TH2* hPhiEtaWithACut    = (TH2F*) gDirectory->Get("hPhiEtaWithACut");    
+    TH2* hPtEtaWithACut     = (TH2F*) gDirectory->Get("hPtEtaWithACut");    
+    TH2* hPtSubEtaWithACut  = (TH2F*) gDirectory->Get("hPtSubEtaWithACut");
 
     /* ------------------------------------------------------------ *
      * Drawing and Saving.                                          *
@@ -112,38 +86,122 @@ void PlotFinder(Int_t nEvents = 1000) {
 
     TFile* f_out = new TFile(Form("./rootFiles/PlotFinder_%d.root", nEvents), "RECREATE");
     f_out->cd();
+
+    //const Float_t pi = (Float_t) TMath::Pi();
+    const std::string hJetLabels[5] = { "p_{T}^{jet,reco}", 
+                                        "#eta^{jet}", 
+                                        "#varphi^{jet}", 
+                                        "Area", 
+                                        "p_{T}^{jet,reco} - #rho A"};
+
     
+    // =====================================================================
     // ___________ 1. Plot the basic jet pt, eta, phi variables. ___________ 
     TCanvas* cJetBasic = new TCanvas("cJetBasic", "cJetBasic", 1000, 500);
     cJetBasic->Divide(3, 1);
-    Int_t iPad = 1;
-    Draw(hPt, hJetLabels[0].data(), "", colors[iPad % 4], cJetBasic, iPad, true); 
-    Draw(hEta, hJetLabels[1].data(), "", colors[iPad % 4], cJetBasic, iPad, true); 
-    Draw(hPhi, hJetLabels[2].data(), "", colors[iPad % 4], cJetBasic, iPad, true); 
+    Int_t iPad   = 1;
+    Draw(hPt,  cJetBasic, iPad, colors[iPad % 4], hJetLabels[0].data(), "",   "SetLogy"); 
+    Draw(hEta, cJetBasic, iPad, colors[iPad % 4], hJetLabels[1].data());
+    Draw(hPhi, cJetBasic, iPad, colors[iPad % 4], hJetLabels[2].data());
 
+    // ================================================================= 
     // ___________ 2. Plot the jet area and ptSub variables. ___________ 
     TCanvas* cJetInfo = new TCanvas("cJetInfo", "cJetInfo", 800, 500);
-    cJetInfo->Divide(2, 1);
-    iPad = 1;
-    Draw(hArea, hJetLabels[3].data(), "", colors[iPad % 4], cJetInfo, iPad, false);
-    Draw(hPtSub, hJetLabels[4].data(), "", colors[iPad % 4], cJetInfo, iPad, false);
+    cJetInfo->Divide(2, 1); iPad = 1;
+    cJetInfo->cd(1)->SetLeftMargin(0.11);
+    cJetInfo->cd(1)->SetBottomMargin(0.12);
+    cJetInfo->cd(2)->SetBottomMargin(0.12);
 
-    // ___________ 2. Plot the jet area and ptSub variables. ___________ 
+    // List of jet legend items for both of these plots. 
+    LegendList legList  = MyJetFinder::GetJetParams();
+    legList.push_back(std::make_pair((TObject*)0, Form("No. Events: %d", nEvents)));
+
+    // 2.1. Draw distribution of jet areas, after cut on areaMin. 
+    Double_t y2 = hArea->GetBinContent(hArea->FindBin(areaMin) + 1);
+    Draw(hArea, cJetInfo, iPad, kGreen - 5, hJetLabels[3].data());
+    Draw(hAreaCut, cJetInfo, --iPad, kBlue - 5, hJetLabels[3].data());
+
+    legList.push_back(std::make_pair(hArea, "Below Acceptance"));
+    legList.push_back(std::make_pair(hAreaCut, "Within Acceptance"));
+    DrawLegend(legList, (TPad*) cJetInfo->cd(1));
+    legList.pop_back(); legList.pop_back();
+
+    // 2.2. Draw background-subtracted pT plot.
+    y2 = hPtSub->GetBinContent(hPtSub->FindBin(0.));
+    Draw(hPtSub, cJetInfo, iPad, kGreen - 5, hJetLabels[4].data(), "", "SetLogy");
+    Draw(hPtSubWithACut, cJetInfo, --iPad, kBlue - 5, hJetLabels[4].data(), "", "SetLogy");
+    DrawLine(Point(0., 0.), Point(0., y2), (TPad*) cJetInfo->cd(2));
+
+    legList.push_back(std::make_pair(hPtSub, "Without Area Cut"));
+    legList.push_back(std::make_pair(hPtSubWithACut, "With Area Cut"));
+    DrawLegend(legList, (TPad*) cJetInfo->cd(2));
+    legList.pop_back(); legList.pop_back();
+
+    // Wait until user double-clicks the canvas before continuing.
+    //cJetInfo->WaitPrimitive();
+
+    // ========================================================
+    // ___________ 3. Plot the per-event variables. ___________ 
     TCanvas* cEventInfo = new TCanvas("cEventInfo", "cEventInfo", 1000, 500);
     cEventInfo->Divide(3, 1);
     iPad = 1;
-    Draw(hNJets, "nJets (per event)", "", colors[iPad % 4], cEventInfo, iPad, false);
-    Draw(hRho, "#rho (per event)", "", colors[iPad % 4], cEventInfo, iPad, false);
-    Draw(hSigma, "#sigma (per event)", "", colors[iPad % 4], cEventInfo, iPad, false);
+    Draw(hNJets,    cEventInfo, iPad, kBlue+3, "nJets (per event)");
+    Draw(hRho,      cEventInfo, iPad, kBlue+3, "#rho (per event)");
+    Draw(hSigma,    cEventInfo, iPad, kBlue+3, "#sigma (per event)");
+    int p = 1; while (p <= 3) DrawLegend(legList, (TPad*) cEventInfo->cd(p++));
 
-    TCanvas* cPtArea = new TCanvas("cPtArea", "cPtArea", 600, 600);
-    cPtArea->cd(); 
-    hPtArea->Draw("colz");
+    // =========================================================================== 
+    // ___________ 4. Plot 2-Dimensional jet area and ptSub variables. ___________ 
+    TCanvas* cAreaPt = new TCanvas("cAreaPt", "cAreaPt", 900, 900);
+    cAreaPt->Divide(2, 1);
+    iPad = 1;
 
+    y2 = hPtSub->GetBinContent(hPtSub->FindBin(0.));
+    Draw(hAreaPt, cAreaPt, iPad, kBlue, "Area", "p_{T}", "SetLogz");
+    DrawLegend(legList, (TPad*) cAreaPt->cd(iPad - 1));
+    DrawLine(Point(areaMin, 0.), Point(areaMin, 50.), (TPad*) cJetInfo->cd(iPad - 1));
+
+    Draw(hAreaPtSub, cAreaPt, iPad, kBlue, "Area", "p_{T} - #rho A", "SetLogz");
+    DrawLine(Point(areaMin, 0.), Point(areaMin, 50.), (TPad*) cJetInfo->cd(iPad - 1));
+    DrawLegend(legList, (TPad*) cAreaPt->cd(iPad - 1));
+
+    // ====================================================== 
+    // ___________ 5. Plot 2-Dimensional phi-eta. ___________ 
+    TCanvas* cPhiEta = new TCanvas("cPhiEta", "cPhiEta", 800, 600);
+    cPhiEta->Divide(2, 1); iPad = 1;
+
+    Draw(hPhiEta, cPhiEta, iPad, kBlue, "#varphi", "#eta");
+    legList.push_back(std::make_pair((TObject*)0, "Without Area Cut"));
+    DrawLegend(legList, (TPad*) cPhiEta->cd(iPad - 1));
+    legList.pop_back();
+
+    Draw(hPhiEtaWithACut, cPhiEta, iPad, kBlue, "#varphi", "#eta");
+    legList.push_back(std::make_pair((TObject*)0, "With Area Cut"));
+    DrawLegend(legList, (TPad*) cPhiEta->cd(iPad - 1));
+    legList.pop_back();
+
+
+    // ========================================================== 
+    // ___________ 6. Plot 2-Dimensional pt(Sub)-eta. ___________ 
+    TCanvas* cPtEta = new TCanvas("cPtEta", "cPtEta", 900, 900);
+    cPtEta->Divide(2, 2); iPad = 1;
+
+    Draw(hPtEta,    cPtEta, iPad, kBlue, "p_{T}", "#eta", "SetLogz");
+    Draw(hPtSubEta, cPtEta, iPad, kBlue, "p_{T} - #rho A", "#eta", "SetLogz");
+    Draw(hPtEtaWithACut,    cPtEta, iPad, kBlue, "p_{T}", "#eta", "SetLogz");
+    Draw(hPtSubEtaWithACut, cPtEta, iPad, kBlue, "p_{T} - #rho A", "#eta", "SetLogz");
+
+    cPtEta->WaitPrimitive();
+
+    // ================================== 
+    // Write all canvases to output file. 
+    cout << "Writing canvases to " << f_out->GetName() << endl;
     cJetBasic->Write();
     cJetInfo->Write();
     cEventInfo->Write();
-    cPtArea->Write();
+    cAreaPt->Write();
+    cPhiEta->Write();
+    cPtEta->Write();
 }
 
 #ifndef __CINT__

@@ -8,16 +8,27 @@
 ********************************************************************************************/
 #include <iostream>
 #include <fstream>
+#include <typeinfo>
 #include "./include/RootClasses.h"
 #include "./include/EventGenerator.h"
 #include "./include/EventFunctions.h"
 #include "./include/Printer.h"
 #include "./include/MyJetFinder.h"
 
+bool isFloat(const char* arg);
+
 // ---------------------------------------------------------------------------------
-void ToyModel(Int_t nEvents = 1000) {
+void ToyModel(Int_t nEvents=1000, Float_t R=0.3) {
     using std::cout;
     using std::endl;
+
+    cout << " ===================================================================\n"
+         << "                    BEGINNING TOYMODEL SIMULATION.                  \n" 
+         << " NUMBER OF EVENTS: " << nEvents << "\n"
+         << " INPUT JET RADIUS: " << R << "\n"
+         << " IN DEBUGGING MODE: " << std::boolalpha << (Printer::debug == true) << "\n"
+         << " =================================================================== " 
+         << endl;
 
     /* ------------------------------------------------ *
      * Object Declarations.            					*
@@ -25,13 +36,12 @@ void ToyModel(Int_t nEvents = 1000) {
 
     // Setup jetFinder.
     EventGenerator* eventGenerator = new EventGenerator();
-    MyJetFinder* jetFinder = new MyJetFinder();
+    MyJetFinder* jetFinder = new MyJetFinder(R);
 
     /* ------------------------------------------------ *
      * Data Generation/Simulation.                   	*
      * ------------------------------------------------ */
 
-    cout << "Beginning ToyModel simulation of " << nEvents << " events." << endl;
     // Simulate nEvents with randomly generated tracks. 
     for (Int_t i_event = 0; i_event < nEvents; i_event++) {
     	// Print progress updates.
@@ -58,10 +68,10 @@ void ToyModel(Int_t nEvents = 1000) {
 
     // Create new ROOT file with generic EventModel objects, and
     // store desired jet histograms in subfolder "jetPlots".
-    TString fileName = Form("./rootFiles/ToyModel_%d.root", nEvents);
-    cout << "Writing data to " << fileName.Data();
-    eventGenerator->Write(fileName);
-    jetFinder->Write(fileName);
+    const std::string fileName = Form("./rootFiles/TM_N%d_R%d.root", nEvents, (int) (R * 10));
+    cout << "Writing data to " << fileName;
+    eventGenerator->Write(fileName.data());
+    jetFinder->Write(fileName.data());
 }
 
 /* This main function is needed to compile via "make."
@@ -69,12 +79,19 @@ void ToyModel(Int_t nEvents = 1000) {
  * else runs for 1000 events. */
 #ifndef __CINT__
 int main(int argc, char* argv[]) {
+    // Case 1: User only provides desired number of events. 
     if (argc == 2) {
         Printer::debug = false;
         ToyModel(atoi(argv[1]));
+    // Case 2: User provides number of events and a radius.
+    } else if (argc == 3 && isFloat(argv[2])) {
+        Printer::debug = false;
+        ToyModel(atoi(argv[1]), atof(argv[2]));
+    // Case 3: User provides number of events and debug flag.
     } else if (argc == 3 && strcmp(argv[2], "debug") == 0){
         Printer::debug = true;
         ToyModel(atoi(argv[1]));
+    // Case 4: User specifies no additional arguments. 
     } else {
         Printer::debug = false;
         ToyModel();
@@ -82,4 +99,8 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 #endif
+
+bool isFloat(const char* arg) {
+    return typeid(atof(arg)) == typeid(double);
+}
 

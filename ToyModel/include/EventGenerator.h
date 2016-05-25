@@ -44,8 +44,6 @@ class EventGenerator {
         /* Returns random number b/w -1 and 1, corresponding to ALICE acceptance. */
         Float_t GetRandEta();
         Double_t GetTrackPt(Float_t xMin=ptMin);
-        /* Returns efficiency from 4-d histogram based on current track values. */
-        Float_t GetEfficiency();
         /* Returns current value of recoMult. Should be called after event is generated. */
         Int_t GetRecoMult();
 
@@ -55,7 +53,7 @@ class EventGenerator {
         void SetCentrality(int percent);
         // ---------- Miscellaneous ----------
         /* Writes and organizes all model information into fileName.root. */
-        void Write(TString fileName);
+        void Write(const char* fileName);
         /* Returns difference between inputs while constraining return value 
          * to be in [0., 2. * pi]; */
         static Float_t dphi(Float_t p, Float_t p2);
@@ -75,27 +73,27 @@ class EventGenerator {
         TSpline* spline;
 
         /* ---------------------------------------------------------------- *
-         * Helper Objects                                                   *
+         * Helper Methods/Objects                                           *
          * ---------------------------------------------------------------- */
         /* Random number generator */
         TRandom3* rand;
         /* The 'functions' variable has access to all sampling distributions the user
          * may wish to use/access throughout the model. */
         EventFunctions* functions;
+        /* Depending on value of pt, evaluates either 
+         * polynomial or linear fit to the raw pt data distribution. */
+        Float_t GetV2(Float_t pt);
+        /* Returns efficiency from 4-d histogram based on current track values. */
+        Float_t GetEfficiency();
+        /* Wraps current values of pt, eta, phi in a PseudoJet and returns it. */
+        PseudoJet GetPseudoJet();
 
-        /* ---------------------------------------------------------------- *
-         * Private Methods                                                  *
-         * ---------------------------------------------------------------- */
+    private:
         /* Create the underlying data trees to store particle information.
          * Each function simply creates a tree with pt, eta, phi branches and returns it. */
         TTree* InitializeTrigger();
         TTree* InitializeAssoc();
         TTree* InitializeBackground();
-        /* Depending on value of pt, evaluates either 
-         * polynomial or linear fit to the raw pt data distribution. */
-        Float_t GetV2(Float_t pt);
-        /* Wraps current values of pt, eta, phi in a PseudoJet and returns it. */
-        PseudoJet GetPseudoJet();
 };
 
 #endif

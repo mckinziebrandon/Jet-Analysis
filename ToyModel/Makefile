@@ -38,9 +38,9 @@ DEPS 	= $(INCLUDE)/EventGenerator.h $(INCLUDE)/RootClasses.h  $(INCLUDE)/EventFu
 LIBFILES= $(LIB)/EventGenerator.so  $(LIB)/EventFunctions.so $(LIB)/MyJetFinder.so $(LIB)/Printer.so  $(LIB)/RootClasses.so
 
 # Object files needed by each target. 
-OBJ1= $(BASEDIR)/ToyModel.so $(LIBFILES) $(STATICLIB)
-OBJ2= PlotModel.so 	$(LIBFILES) $(STATICLIB)
-OBJ3= $(BASEDIR)/PlotFinder.so $(LIB)/RootClasses.so
+OBJ1= $(BASEDIR)/ToyModel.so 	$(LIBFILES) $(STATICLIB)
+OBJ2= $(BASEDIR)/PlotModel.so 	$(LIBFILES)
+OBJ3= $(BASEDIR)/PlotFinder.so 	$(LIB)/RootClasses.so $(LIB)/MyJetFinder.so
 OBJ4= PythiaEvent.so $(LIBFILES) $(STATICLIB)
 OBJ5= PlotData.so  	$(LIBFILES) $(STATICLIB) 
 
@@ -60,7 +60,7 @@ ToyModel: $(OBJ1)
 
 PlotModel: $(OBJ2)
 	echo "Beginning compilation of $@ . . . "
-	$(CXX) -o $@ $(OBJ2) $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
+	$(CXX) -o $@ $^ $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS) -Wl,--no-as-needed
 
 PlotFinder: $(OBJ3)
 	echo "Beginning compilation of $@ . . . "

@@ -10,17 +10,29 @@ MyJetFinder::MyJetFinder() {
     jetDef = JetDefinition(antikt_algorithm, R);
 }
 
+MyJetFinder::MyJetFinder(Float_t R) {
+    this->R = R;
+    tEventJetInfo      = new TNtuple("tEventJetInfo", "Event jet properties", "n:rho:sigma");
+    tJetInfo    = new TNtuple("tJetInfo", "Individual jet properties.", "pt:eta:phi:area:ptSub");
+    jetDef = JetDefinition(antikt_algorithm, R);
+}
+
 /* In addition to deleting ~EventGenerator(),
  * delete all jet finder objects. */
 MyJetFinder::~MyJetFinder() {
 }
 
-/* Cluster on particlesVector and create jetsVector.*/
-void MyJetFinder::FindJets(vector<PseudoJet> event) {
+/************************************************************************
+* FindJets(): Most important method of MyJetFinder class.               *
+* 1. Cluster vector of particles according to jet and area definitions. *
+* 2. Apply fiducial (eta) cut on vector of jets.                        *
+* 3. Define the combinatorial background (and do nothing with it?).     *
+*************************************************************************/
+void MyJetFinder::FindJets(std::vector<PseudoJet> event) {
     // Jet area definition. 
     Double_t ghostMaxRap = etaMax; // Fiducial cut for back
     GhostedAreaSpec areaSpec(ghostMaxRap);
-    AreaDefinition areaDef(active_area_explicit_ghosts, GhostedAreaSpec(ghostMaxRap, 1, 0.01));
+    AreaDefinition areaDef(active_area_explicit_ghosts, GhostedAreaSpec(ghostMaxRap, 1, 0.005));
 
     // Cluster all particles in event according to jet area & area definitions.
     particlesVector = event;
@@ -33,7 +45,7 @@ void MyJetFinder::FindJets(vector<PseudoJet> event) {
 
     // Background definition.
     JetDefinition jetDefBkg(kt_algorithm, R);
-    AreaDefinition areaDefBkg(active_area_explicit_ghosts, GhostedAreaSpec(ghostMaxRap, 1, 0.01));
+    AreaDefinition areaDefBkg(active_area_explicit_ghosts, GhostedAreaSpec(ghostMaxRap, 1, 0.005));
     Selector bkgSelector = SelectorAbsEtaMax(etaMax) * (!SelectorNHardest(Remove_N_hardest));
 
     // Background estimation and subtraction. 
@@ -54,6 +66,17 @@ void MyJetFinder::FindJets(vector<PseudoJet> event) {
                 jetsVector[i].perp() - rho * jetsVector[i].area());
     }
 }
+
+// Returns list of legend entries that are important for any jet-related plot. 
+LegendList MyJetFinder::GetJetParams() {
+    LegendList params;
+    params.push_back(std::make_pair((TObject*)0, Form("R = %.1f, anti-kT", R)));
+    params.push_back(std::make_pair((TObject*)0, Form("A > %.2f", areaMin)));
+    params.push_back(std::make_pair((TObject*)0, Form("p_{T} = %.1f", ptMin)));
+    return params;
+}
+
+
 
 Int_t MyJetFinder::GetNumJets() {
 	return jetsVector.size();
@@ -80,7 +103,7 @@ void MyJetFinder::PrintJets() {
         cout << jetsVector[i].phi() << endl;
 
         // Print the pt for each constituent.
-        vector<PseudoJet> constituents = jetsVector[i].constituents();
+        std::vector<PseudoJet> constituents = jetsVector[i].constituents();
         for (unsigned j = 0; j < constituents.size(); j++) {
             cout << "Constituent " << j << "'s pt: " << constituents[j].pt() << endl;
         } 
@@ -90,8 +113,8 @@ void MyJetFinder::PrintJets() {
 /************************************************************************************
  * Places a jetPlots directory in the root file created by EventGenerator::Write(). *
  ************************************************************************************/
-void MyJetFinder::Write(TString fileName) {
-    TFile* jetFile = new TFile(fileName.Data(), "UPDATE");
+void MyJetFinder::Write(const char* fileName) {
+    TFile* jetFile = new TFile(fileName, "UPDATE");
 
     // _____ Store all plots from jet finder. _____
     TDirectory* jetDir = jetFile->mkdir("jetPlots");

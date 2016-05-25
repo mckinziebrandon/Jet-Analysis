@@ -1,31 +1,28 @@
 #include "../include/RootClasses.h"
 
-template<typename Hist>
-void SetDrawOptions(Hist* h, Color_t col, const char* x_label="", const char* y_label="") {
-    h->SetStats(0);
-    // Line and fill properties.
-    h->SetFillColor(col);
-    h->SetLineColor(col);
-    h->SetLineWidth(2);
-    h->SetFillStyle(0);
-    // Axis properties.
-    h->SetTitle("");
-    if (strcmp(x_label, "") != 0) h->GetXaxis()->SetTitle(x_label);
-    if (strcmp(y_label, "") != 0) h->GetYaxis()->SetTitle(y_label);
-    h->GetXaxis()->SetTitleSize(0.05);
-    h->GetYaxis()->SetTitleOffset(1.2);
-    h->GetYaxis()->SetTitleSize(0.04);
-    h->GetXaxis()->CenterTitle();
-    h->GetYaxis()->CenterTitle();
+TLine* DrawLine(Point p1, Point p2, TPad* pad) {
+    pad->cd();
+    TLine* line = new TLine(p1.X, p1.Y, p2.X, p2.Y);
+    line->SetLineStyle(2);
+    line->SetLineColor(12); // Dark gray. 
+    line->SetLineWidth(2);
+    line->Draw("same");
+    return line;
 }
 
-template<typename Hist>
-void Draw(Hist* hModel, Hist* hData, TCanvas* c, Int_t& iPad) {
-    if (iPad == 1) { c->cd(iPad)->SetLogy(1); }
-    c->cd(iPad);
-    hModel->Draw("same");
-    hData->Draw("same");
 
+void DrawLegend(LegendList items, TPad* pad) {
+    pad->cd();
+    pad->SetTicks(1, 1);
+    TLegend* leg = new TLegend(0.55, 0.7, 0.95, 0.9);
+    for (auto i : items) {
+        if (i.first == (TObject*)0)   leg->AddEntry(i.first, i.second, "");
+        else                    leg->AddEntry(i.first, i.second, "l");
+    }
+    leg->SetBorderSize(0);
+    leg->SetTextSize(0.04);
+    leg->SetFillStyle(1001); // Solid 
+    leg->Draw("same");
 }
 
 void DrawLegend(TH1* hModel, TH1* hData, TGraph* g, TGraph* g2, TCanvas* c, Int_t& iPad) {
@@ -40,17 +37,7 @@ void DrawLegend(TH1* hModel, TH1* hData, TGraph* g, TGraph* g2, TCanvas* c, Int_
 }
 
 
-// Draws the histogram on iPad of canvas, increments iPad by 1, and sets the draw options. 
-//template<typename Hist>
-void Draw(TH1* h, const char* xLabel, const char* yLabel, Color_t col, TCanvas* c, Int_t& iPad, bool setLog) {
-    if (setLog && (iPad == 1 || iPad == 4)) { c->cd(iPad)->SetLogy(1); } // so janky
-    c->cd(iPad++);
-    h->Draw();
-    SetDrawOptions(h, col, xLabel, yLabel);
-}
-
-template<typename Graph>
-void Draw(Graph* g, TCanvas* c, Int_t& iPad) {
+void Draw(TGraph* g, TCanvas* c, Int_t& iPad) {
     c->cd(iPad);
     g->Draw("AP");
     g->GetXaxis()->CenterTitle();
@@ -76,4 +63,5 @@ void DrawRatio(TH1* hModDat, TH1* hModSamp, TCanvas* c) {
     legRatio->SetBorderSize(0);
     legRatio->Draw();
 }
+
 
