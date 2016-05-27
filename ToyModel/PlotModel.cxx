@@ -13,7 +13,7 @@
 #include "./include/EventGenerator.h"
 
 // --------------------------------------------------------------------------------------------
-void PlotModel(Int_t nEvents = 1000) {
+void PlotModel(Int_t nEvents = 1000, Float_t R = 0.3) {
     /* ------------------------------------------------------------ *
      * Store input file data into trees.                            *
      * ------------------------------------------------------------ */
@@ -21,7 +21,7 @@ void PlotModel(Int_t nEvents = 1000) {
     cout << "Beginning PlotModel for " << nEvents << " number of Events . . . " << endl;
 
     // Grab phase space trees from ToyModel.C output. 
-    TFile* fTrees           = new TFile(Form("./rootFiles/ToyModel_%d.root", nEvents), "READ");
+    TFile* fTrees           = new TFile(Form("./rootFiles/TM_N%d_R%d.root", nEvents, (int) (R * 10)), "READ");
     TDirectory* dirTrees    = (TDirectory*) fTrees->Get("trees;1");
     TTree* tBkg             = (TTree*) dirTrees->Get("tBkg;1");
 
@@ -59,6 +59,13 @@ void PlotModel(Int_t nEvents = 1000) {
     Draw(hEta, cBasic, iPad, colors[0], "#eta", "dN/d#eta");
     Draw(hPhi, cBasic, iPad, colors[0], "#varphi", "dN/d#varphi");
 
+    for (int i = 1; i <= 3; i++) cBasic->cd(i)->SetLeftMargin(0.17);
+    hPt->GetYaxis()->SetTitleOffset(1.8);
+    hEta->GetYaxis()->SetTitleOffset(1.8);
+    hPhi->GetYaxis()->SetTitleOffset(1.8);
+
+    cBasic->WaitPrimitive();
+
     // _________________ {Phi;pT}-Eta Canvas _________________
     TCanvas* cPhiEta = new TCanvas("cPhiEta", "cPhiEta", 700, 700);
     cPhiEta->Divide(2, 1); iPad = 1;
@@ -68,7 +75,6 @@ void PlotModel(Int_t nEvents = 1000) {
     //Draw(hPtEta,  cPhiEta, iPad, colors[0], xLab.data(), "#eta", "SetLogx");
     Draw(hPhiEta, cPhiEta, iPad, colors[0], "#phi", "#eta");
 
-    cPhiEta->WaitPrimitive();
 
     // Write canvases to output ROOT file. 
     cBasic->Write();

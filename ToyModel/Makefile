@@ -43,6 +43,7 @@ OBJ2= $(BASEDIR)/PlotModel.so 	$(LIBFILES)
 OBJ3= $(BASEDIR)/PlotFinder.so 	$(LIB)/RootClasses.so $(LIB)/MyJetFinder.so
 OBJ4= PythiaEvent.so $(LIBFILES) $(STATICLIB)
 OBJ5= PlotData.so  	$(LIBFILES) $(STATICLIB) 
+OBJ6= $(BASEDIR)/CompareJetR.so 	$(LIB)/RootClasses.so $(LIB)/MyJetFinder.so
 
 DICT=EventModelDict.cxx
 LINK=LinkDef.h
@@ -58,11 +59,15 @@ ToyModel: $(OBJ1)
 	echo "Beginning compilation of $@ . . . "
 	$(CXX) -o $@ $^ $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS)
 
-PlotModel: $(OBJ2)
+PlotFinder: $(OBJ3)
 	echo "Beginning compilation of $@ . . . "
 	$(CXX) -o $@ $^ $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS) -Wl,--no-as-needed
 
-PlotFinder: $(OBJ3)
+CompareJetR: $(OBJ6)
+	echo "Beginning compilation of $@ . . . "
+	$(CXX) -o $@ $^ $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS) -Wl,--no-as-needed
+
+PlotModel: $(OBJ2)
 	echo "Beginning compilation of $@ . . . "
 	$(CXX) -o $@ $^ $(FJETFLAGS) $(ROOTCFLAGS) $(ROOTLIBS) $(ROOTGLIBS) -Wl,--no-as-needed
 

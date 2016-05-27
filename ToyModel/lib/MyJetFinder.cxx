@@ -70,7 +70,7 @@ void MyJetFinder::FindJets(std::vector<PseudoJet> event) {
 // Returns list of legend entries that are important for any jet-related plot. 
 LegendList MyJetFinder::GetJetParams() {
     LegendList params;
-    params.push_back(std::make_pair((TObject*)0, Form("R = %.1f, anti-kT", R)));
+    //params.push_back(std::make_pair((TObject*)0, Form("R = %.1f, anti-kT", R)));
     params.push_back(std::make_pair((TObject*)0, Form("A > %.2f", areaMin)));
     params.push_back(std::make_pair((TObject*)0, Form("p_{T} = %.1f", ptMin)));
     return params;

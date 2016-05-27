@@ -10,24 +10,47 @@
 #include "./include/RootClasses.h"
 #include "./include/MyJetFinder.h"
 
+bool isFloat(const char* arg) {
+    return typeid(atof(arg)) == typeid(double);
+}
+const std::string hJetLabels[5] = { "p_{T}^{jet,reco}", "#eta^{jet}", 
+                                    "#varphi^{jet}",    "Area", 
+                                    "p_{T}^{jet,reco} - #rho A"};
+
+// List of jet legend items for both of these plots. 
+LegendList legList  = MyJetFinder::GetJetParams();
+
+TCanvas* GetJetBasic(TH1* hPt, TH1* hEta, TH1* hPhi);
+TCanvas* GetJetInfo(TH1* hArea, TH1* hAreaCut, TH1* hPtSub, TH1* hPtSubWithACut);
+TCanvas* GetEventInfo(TH1* hNJets, TH1* hRho, TH1* hSigma);
+TCanvas* GetAreaPt(TH2* hAreaPt, TH2* hAreaPtSub);
+TCanvas* GetPhiEta(TH2* hPhiEta, TH2* hPhiEtaWithACut);
+TCanvas* GetPtEta(TH2* hPtEta, TH2* hPtSubEta, TH2* hPtEtaWithACut, TH2* hPtSubEtaWithACut);
+
 // --------------------------------------------------------------------------------------------
-void PlotFinder(Int_t nEvents = 1000) {
+void PlotFinder(Int_t nEvents = 1000, Float_t R = 0.3) {
     using std::cout;
     using std::endl;
     
+    legList.push_back(std::make_pair((TObject*)0, Form("No. Events: %d", nEvents)));
+    legList.push_back(std::make_pair((TObject*)0, Form("R = %.1f, anti-kT", R)));
+
     cout << "Plotting jet quantities from most recent Toy Model run of " 
          << nEvents << " number of events...." << endl;
-
 
     /* ------------------------------------------------------------ *
      * Store input file data into trees.                            *
      * ------------------------------------------------------------ */
 
     // Grab phase space trees from ToyModel.C output. 
-    TFile* fTrees           = new TFile(Form("./rootFiles/ToyModel_%d.root", nEvents), "READ");
-    TDirectory* dirJets	    = (TDirectory*) fTrees->Get("jetPlots;1");
-    TTree* tEventJetInfo    = (TTree*) dirJets->Get("tEventJetInfo;1");
-    TTree* tJetInfo         = (TTree*) dirJets->Get("tJetInfo;1");
+    const std::string fileName = Form("./rootFiles/TM_N%d_R%d.root", nEvents, (int) (R * 10));
+    TFile* fTrees        = new TFile(fileName.data(), "READ");
+    TDirectory* dirJets	 = (TDirectory*) fTrees->Get("jetPlots;1");
+    TTree* tEventJetInfo = (TTree*) dirJets->Get("tEventJetInfo;1");
+    TTree* tJetInfo      = (TTree*) dirJets->Get("tJetInfo;1");
+
+    TFile* f_out = new TFile(Form("./rootFiles/PF_N%d_R%d.root", nEvents, (int) (R * 10)), "RECREATE");
+    f_out->cd();
 
     /* ---------------------------------------------------- *
      * Extract desired plots from trees into histograms.    *
@@ -84,116 +107,16 @@ void PlotFinder(Int_t nEvents = 1000) {
      * Drawing and Saving.                                          *
      * ------------------------------------------------------------ */
 
-    TFile* f_out = new TFile(Form("./rootFiles/PlotFinder_%d.root", nEvents), "RECREATE");
-    f_out->cd();
 
-    //const Float_t pi = (Float_t) TMath::Pi();
-    const std::string hJetLabels[5] = { "p_{T}^{jet,reco}", 
-                                        "#eta^{jet}", 
-                                        "#varphi^{jet}", 
-                                        "Area", 
-                                        "p_{T}^{jet,reco} - #rho A"};
-
-    
-    // =====================================================================
-    // ___________ 1. Plot the basic jet pt, eta, phi variables. ___________ 
-    TCanvas* cJetBasic = new TCanvas("cJetBasic", "cJetBasic", 1000, 500);
-    cJetBasic->Divide(3, 1);
-    Int_t iPad   = 1;
-    Draw(hPt,  cJetBasic, iPad, colors[iPad % 4], hJetLabels[0].data(), "",   "SetLogy"); 
-    Draw(hEta, cJetBasic, iPad, colors[iPad % 4], hJetLabels[1].data());
-    Draw(hPhi, cJetBasic, iPad, colors[iPad % 4], hJetLabels[2].data());
-
-    // ================================================================= 
-    // ___________ 2. Plot the jet area and ptSub variables. ___________ 
-    TCanvas* cJetInfo = new TCanvas("cJetInfo", "cJetInfo", 800, 500);
-    cJetInfo->Divide(2, 1); iPad = 1;
-    cJetInfo->cd(1)->SetLeftMargin(0.11);
-    cJetInfo->cd(1)->SetBottomMargin(0.12);
-    cJetInfo->cd(2)->SetBottomMargin(0.12);
-
-    // List of jet legend items for both of these plots. 
-    LegendList legList  = MyJetFinder::GetJetParams();
-    legList.push_back(std::make_pair((TObject*)0, Form("No. Events: %d", nEvents)));
-
-    // 2.1. Draw distribution of jet areas, after cut on areaMin. 
-    Double_t y2 = hArea->GetBinContent(hArea->FindBin(areaMin) + 1);
-    Draw(hArea, cJetInfo, iPad, kGreen - 5, hJetLabels[3].data());
-    Draw(hAreaCut, cJetInfo, --iPad, kBlue - 5, hJetLabels[3].data());
-
-    legList.push_back(std::make_pair(hArea, "Below Acceptance"));
-    legList.push_back(std::make_pair(hAreaCut, "Within Acceptance"));
-    DrawLegend(legList, (TPad*) cJetInfo->cd(1));
-    legList.pop_back(); legList.pop_back();
-
-    // 2.2. Draw background-subtracted pT plot.
-    y2 = hPtSub->GetBinContent(hPtSub->FindBin(0.));
-    Draw(hPtSub, cJetInfo, iPad, kGreen - 5, hJetLabels[4].data(), "", "SetLogy");
-    Draw(hPtSubWithACut, cJetInfo, --iPad, kBlue - 5, hJetLabels[4].data(), "", "SetLogy");
-    DrawLine(Point(0., 0.), Point(0., y2), (TPad*) cJetInfo->cd(2));
-
-    legList.push_back(std::make_pair(hPtSub, "Without Area Cut"));
-    legList.push_back(std::make_pair(hPtSubWithACut, "With Area Cut"));
-    DrawLegend(legList, (TPad*) cJetInfo->cd(2));
-    legList.pop_back(); legList.pop_back();
-
-    // Wait until user double-clicks the canvas before continuing.
-    //cJetInfo->WaitPrimitive();
-
-    // ========================================================
-    // ___________ 3. Plot the per-event variables. ___________ 
-    TCanvas* cEventInfo = new TCanvas("cEventInfo", "cEventInfo", 1000, 500);
-    cEventInfo->Divide(3, 1);
-    iPad = 1;
-    Draw(hNJets,    cEventInfo, iPad, kBlue+3, "nJets (per event)");
-    Draw(hRho,      cEventInfo, iPad, kBlue+3, "#rho (per event)");
-    Draw(hSigma,    cEventInfo, iPad, kBlue+3, "#sigma (per event)");
-    int p = 1; while (p <= 3) DrawLegend(legList, (TPad*) cEventInfo->cd(p++));
-
-    // =========================================================================== 
-    // ___________ 4. Plot 2-Dimensional jet area and ptSub variables. ___________ 
-    TCanvas* cAreaPt = new TCanvas("cAreaPt", "cAreaPt", 900, 900);
-    cAreaPt->Divide(2, 1);
-    iPad = 1;
-
-    y2 = hPtSub->GetBinContent(hPtSub->FindBin(0.));
-    Draw(hAreaPt, cAreaPt, iPad, kBlue, "Area", "p_{T}", "SetLogz");
-    DrawLegend(legList, (TPad*) cAreaPt->cd(iPad - 1));
-    DrawLine(Point(areaMin, 0.), Point(areaMin, 50.), (TPad*) cJetInfo->cd(iPad - 1));
-
-    Draw(hAreaPtSub, cAreaPt, iPad, kBlue, "Area", "p_{T} - #rho A", "SetLogz");
-    DrawLine(Point(areaMin, 0.), Point(areaMin, 50.), (TPad*) cJetInfo->cd(iPad - 1));
-    DrawLegend(legList, (TPad*) cAreaPt->cd(iPad - 1));
-
-    // ====================================================== 
-    // ___________ 5. Plot 2-Dimensional phi-eta. ___________ 
-    TCanvas* cPhiEta = new TCanvas("cPhiEta", "cPhiEta", 800, 600);
-    cPhiEta->Divide(2, 1); iPad = 1;
-
-    Draw(hPhiEta, cPhiEta, iPad, kBlue, "#varphi", "#eta");
-    legList.push_back(std::make_pair((TObject*)0, "Without Area Cut"));
-    DrawLegend(legList, (TPad*) cPhiEta->cd(iPad - 1));
-    legList.pop_back();
-
-    Draw(hPhiEtaWithACut, cPhiEta, iPad, kBlue, "#varphi", "#eta");
-    legList.push_back(std::make_pair((TObject*)0, "With Area Cut"));
-    DrawLegend(legList, (TPad*) cPhiEta->cd(iPad - 1));
-    legList.pop_back();
+    // Create all canvases with plots.
+    TCanvas* cJetBasic  = GetJetBasic(hPt, hEta, hPhi);
+    TCanvas* cJetInfo   = GetJetInfo(hArea, hAreaCut, hPtSub, hPtSubWithACut);
+    TCanvas* cEventInfo = GetEventInfo(hNJets, hRho, hSigma);
+    TCanvas* cPhiEta    = GetPhiEta(hPhiEta, hPhiEtaWithACut);
+    TCanvas* cPtEta     = GetPtEta(hPtEta, hPtSubEta, hPtEtaWithACut, hPtSubEtaWithACut);
+    TCanvas* cAreaPt    = GetAreaPt(hAreaPt, hAreaPtSub);
 
 
-    // ========================================================== 
-    // ___________ 6. Plot 2-Dimensional pt(Sub)-eta. ___________ 
-    TCanvas* cPtEta = new TCanvas("cPtEta", "cPtEta", 900, 900);
-    cPtEta->Divide(2, 2); iPad = 1;
-
-    Draw(hPtEta,    cPtEta, iPad, kBlue, "p_{T}", "#eta", "SetLogz");
-    Draw(hPtSubEta, cPtEta, iPad, kBlue, "p_{T} - #rho A", "#eta", "SetLogz");
-    Draw(hPtEtaWithACut,    cPtEta, iPad, kBlue, "p_{T}", "#eta", "SetLogz");
-    Draw(hPtSubEtaWithACut, cPtEta, iPad, kBlue, "p_{T} - #rho A", "#eta", "SetLogz");
-
-    cPtEta->WaitPrimitive();
-
-    // ================================== 
     // Write all canvases to output file. 
     cout << "Writing canvases to " << f_out->GetName() << endl;
     cJetBasic->Write();
@@ -202,6 +125,8 @@ void PlotFinder(Int_t nEvents = 1000) {
     cAreaPt->Write();
     cPhiEta->Write();
     cPtEta->Write();
+    f_out->Write();
+
 }
 
 #ifndef __CINT__
@@ -210,12 +135,113 @@ int main(int argc, char* argv[])
     // Needed for incredibly obscure reason. 
     TApplication theAPP("App", &argc, argv);
 
-    if (argc == 2) 
-        PlotFinder(std::atoi(argv[1]));
-    else
+    // Case 1: User only provides desired number of events. 
+    if (argc == 2) {
+       PlotFinder(atoi(argv[1]));
+    // Case 2: User provides number of events and a radius.
+    } else if (argc == 3 && isFloat(argv[2])) {
+        PlotFinder(atoi(argv[1]), atof(argv[2]));
+    // Case 3: User specifies no additional arguments. 
+    } else {
         PlotFinder();
+    }
     return 0;
 }
 #endif
 
+// ___________ 1. Plot the basic jet pt, eta, phi variables. ___________ 
+TCanvas* GetJetBasic(TH1* hPt, TH1* hEta, TH1* hPhi) {
+    TCanvas* canvas = new TCanvas("cJetBasic", "canvas", 1000, 500);
+    canvas->Divide(3, 1); Int_t iPad   = 1;
+    Draw(hPt,  canvas, iPad, colors[iPad % 4], hJetLabels[0].data(), "",   "SetLogy"); 
+    Draw(hEta, canvas, iPad, colors[iPad % 4], hJetLabels[1].data());
+    Draw(hPhi, canvas, iPad, colors[iPad % 4], hJetLabels[2].data());
+    return canvas;
+}
 
+// ___________ 2. Plot the jet area and ptSub variables. ___________ 
+TCanvas* GetJetInfo(TH1* hArea, TH1* hAreaCut, TH1* hPtSub, TH1* hPtSubWithACut) {
+    TCanvas* canvas = new TCanvas("cJetInfo", "canvas", 800, 500);
+    canvas->Divide(2, 1); Int_t iPad = 1;
+    canvas->cd(1)->SetLeftMargin(0.11);
+    canvas->cd(1)->SetBottomMargin(0.12);
+    canvas->cd(2)->SetBottomMargin(0.12);
+
+    // 2.1. Draw distribution of jet areas, after cut on areaMin. 
+    Double_t y2 = hArea->GetBinContent(hArea->FindBin(areaMin) + 1);
+    Draw(hArea, canvas, iPad, kGreen - 5, hJetLabels[3].data());
+    Draw(hAreaCut, canvas, --iPad, kBlue - 5, hJetLabels[3].data());
+
+    legList.push_back(std::make_pair(hArea, "Below Acceptance"));
+    legList.push_back(std::make_pair(hAreaCut, "Within Acceptance"));
+    DrawLegend(legList, (TPad*) canvas->cd(1));
+    legList.pop_back(); legList.pop_back();
+
+    // 2.2. Draw background-subtracted pT plot.
+    y2 = hPtSub->GetBinContent(hPtSub->FindBin(0.));
+    Draw(hPtSub, canvas, iPad, kGreen - 5, hJetLabels[4].data(), "", "SetLogy");
+    Draw(hPtSubWithACut, canvas, --iPad, kBlue - 5, hJetLabels[4].data(), "", "SetLogy");
+    DrawLine(Point(0., 0.), Point(0., y2), (TPad*) canvas->cd(2));
+
+    legList.push_back(std::make_pair(hPtSub, "Without Area Cut"));
+    legList.push_back(std::make_pair(hPtSubWithACut, "With Area Cut"));
+    DrawLegend(legList, (TPad*) canvas->cd(2));
+    legList.pop_back(); legList.pop_back();
+
+    return canvas;
+}
+
+// ___________ 3. Plot the per-event variables. ___________ 
+TCanvas* GetEventInfo(TH1* hNJets, TH1* hRho, TH1* hSigma) {
+    TCanvas* canvas = new TCanvas("cEventInfo", "canvas", 1000, 500);
+    canvas->Divide(3, 1); Int_t iPad = 1;
+    Draw(hNJets,    canvas, iPad, kBlue+3, "nJets (per event)");
+    Draw(hRho,      canvas, iPad, kBlue+3, "#rho (per event)");
+    Draw(hSigma,    canvas, iPad, kBlue+3, "#sigma (per event)");
+    int p = 1; while (p <= 3) DrawLegend(legList, (TPad*) canvas->cd(p++));
+    return canvas;
+}
+
+// ___________ 4. Plot 2-Dimensional jet area and ptSub variables. ___________ 
+TCanvas* GetAreaPt(TH2* hAreaPt, TH2* hAreaPtSub) {
+    TCanvas* canvas = new TCanvas("cAreaPt", "canvas", 900, 900);
+    canvas->Divide(2, 1); Int_t iPad = 1;
+
+    Draw(hAreaPt, canvas, iPad, kBlue, "Area", "p_{T}", "SetLogz");
+    DrawLegend(legList, (TPad*) canvas->cd(iPad - 1));
+    DrawLine(Point(areaMin, 0.), Point(areaMin, 50.), (TPad*) canvas->cd(iPad - 1));
+
+    Draw(hAreaPtSub, canvas, iPad, kBlue, "Area", "p_{T} - #rho A", "SetLogz");
+    DrawLine(Point(areaMin, 0.), Point(areaMin, 50.), (TPad*) canvas->cd(iPad - 1));
+    DrawLegend(legList, (TPad*) canvas->cd(iPad - 1));
+    return canvas;
+}
+
+// ___________ 5. Plot 2-Dimensional phi-eta. ___________ 
+TCanvas* GetPhiEta(TH2* hPhiEta, TH2* hPhiEtaWithACut) {
+    TCanvas* canvas = new TCanvas("cPhiEta", "canvas", 800, 600);
+    canvas->Divide(2, 1); Int_t iPad = 1;
+
+    Draw(hPhiEta, canvas, iPad, kBlue, "#varphi", "#eta");
+    legList.push_back(std::make_pair((TObject*)0, "Without Area Cut"));
+    DrawLegend(legList, (TPad*) canvas->cd(iPad - 1));
+    legList.pop_back();
+
+    Draw(hPhiEtaWithACut, canvas, iPad, kBlue, "#varphi", "#eta");
+    legList.push_back(std::make_pair((TObject*)0, "With Area Cut"));
+    DrawLegend(legList, (TPad*) canvas->cd(iPad - 1));
+    legList.pop_back();
+    return canvas;
+}
+
+// ___________ 6. Plot 2-Dimensional pt(Sub)-eta. ___________ 
+TCanvas* GetPtEta(TH2* hPtEta, TH2* hPtSubEta, TH2* hPtEtaWithACut, TH2* hPtSubEtaWithACut) {
+    TCanvas* canvas = new TCanvas("cPtEta", "canvas", 900, 900);
+    canvas->Divide(2, 2); Int_t iPad = 1;
+
+    Draw(hPtEta,    canvas, iPad, kBlue, "p_{T}", "#eta", "SetLogz");
+    Draw(hPtSubEta, canvas, iPad, kBlue, "p_{T} - #rho A", "#eta", "SetLogz");
+    Draw(hPtEtaWithACut,    canvas, iPad, kBlue, "p_{T}", "#eta", "SetLogz");
+    Draw(hPtSubEtaWithACut, canvas, iPad, kBlue, "p_{T} - #rho A", "#eta", "SetLogz"); 
+    return canvas;
+}

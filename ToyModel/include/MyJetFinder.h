@@ -26,7 +26,7 @@ class MyJetFinder {
         void PrintJets();
         void Clear();
         void Write(const char* fileName);
-        /*static*/LegendList GetJetParams();
+        static LegendList GetJetParams();
     private:
         Float_t R=0.3;
         Double_t rho, sigma;
