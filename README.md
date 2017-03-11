@@ -37,3 +37,36 @@ Overall, simplicity and ease of use was a primary goal in developing the codebas
     }
 
 ```
+
+## Quick Visualizations
+
+### Jet Distributions in η-Area Phase Space
+
+
+<img alt='JetAreaEta2D' src="http://i.imgur.com/dQ4ZpZN.png?1" width="600">
+
+
+Surface plots of jet η and jet area for (top-left) R = 0.2, (top-right) R = 0.3 , (lower-left) R = 0.4, and (lower-right) R = 0. Distributions in η deviate from expectations primarily for jets with areas close to zero. This is a direct consequence of how the clustering is performed by the anti-kT algorithm. Clustering will evolve by sequentially grouping nearby high-pT tracks until their associated proto-jet has a large enough pT to be designated as a jet.  Near the end of the clustering process, however, there will inevitably be small-area proto-jets scattered in (η,φ) that either don’t meet the criteria to merge with a neighboring proto-jet or are situated such that all tracks within R have already been assigned to a jet. Therefore, it is unsurprising to observe uniformity in η for the large-area jets and less conventional behavior for small-are jets. There does appear to be a trend in the η distribution for the low-area jets as R increases that is a consequence of the boundary condition |track η| < 0.9. If our acceptance was larger, say |η| < 2.0, such boundary effects would be less noticeable. This is confirmed in the figure below. 
+
+<img alt='JetAreaEta2D' src="http://i.imgur.com/CYKyTye.png?1" width="600">
+
+Jet  area  and η distributions  with  an  increased  acceptance  of|η| < 2.0.  
+
+### Reconstructed Jets: Area Distributions for Different Radii
+
+As the value of R increases, the number of measured jets per event decreases. This is nothing more than
+a consequence of geometry, since R determines the angular reach of the anti-kT algorithm in η−φ space. Therefore, since no two reconstructed jets can overlap in η−φ, we have that large R corresponds to less reconstructed jets per event. These geometrical/boundary-condition effects are evident in the figure below.
+
+<img alt='JetArea' src="http://i.imgur.com/LvF7Kz7.png?1" width="600">
+
+This figure shows the event-normalized distributions of reconstructed jet areas for different simulated values of R.  The  dashed vertical lines indicate where Jet Area = πR^2 for each value of R.
+
+
+### The Effect of Acceptance Cuts
+
+Below is an illustration of how the jet area cut can affect the pT distribution for R = 0.3. 
+
+<img alt='JetCutArea' src="http://i.imgur.com/L76kc7V.png?1" width="600">
+
+Left:  An area cut requiring A > 0.15 is applied. Blue represents the region that is kept, while green represents the region rejected. Right: background-subtracted jet pT distribution shown for jets that passed that area cut (blue), as well as all jets where no area cut was applied (green)
+
