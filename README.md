@@ -1,5 +1,7 @@
 # Event Generation and Jet Finding
 
+[[Link to paper summary]](http://mckinziebrandon.me/assets/pdf/papers/LBNL_ToyModelResearch.pdf)
+
 Recently (March 5th) moved from private BitBucket repository to Github. A research project of mine while working with Relativistic Nuclear Collisions (RNC) group at Lawrence Berkeley National Laboratory.
 
 The two main classes, EventGenerator and MyJetFinder, can be used together simulate collision events and analyze properties of jets produced in the events. The goal of the project was to input measured parameters from ALICE event data, and compare the analysis done by MyJetFinder with analyses on the experimental data. Such comparisons are useful for testing our understanding of cause-effect relationships in high energy collisions and for ascertaining the predictive power of simulation models.
